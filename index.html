@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Zeratul</title>
+	<link rel="stylesheet" href="styles.css">
+	<link rel="icon" href="./assets/favicon.ico" type="image/x-icon">
+</head>
+
+<body>
+<header class="app-header">
+	<img class="header-logo" src="https://i.imgs.ovh/2026/03/06/OZ1E3b.webp" alt="SC2">
+	<h1>星际酒馆PVP 泽拉图的神秘妙妙猜牌工具 V2</h1>
+</header>
+
+<main class="app-main">
+	<aside class="sidebar">
+		<div class="sidebar-frame">
+			<h2>卡包选择</h2>
+			<div class="dataset-controls" id="packToggles"></div>
+			<div id="datasetInfo" class="muted"></div>
+		</div>
+	</aside>
+
+	<div class="main-content">
+		<section class="panel">
+			<h2>进场一张卡牌 <span class="tip-trigger" tabindex="0">?<span class="tip-bubble">已经猜中至少一张预言牌后，可以通过新进场卡牌中精英隐刀数量的奇偶来判断是否从未知预言牌获得隐刀，或者听语音。<br>某些卡牌的进场效果会吃掉隐刀，例如重回战场会把隐刀变不朽，使用时注意。</span></span>
+			</h2>
+			<div class="guess-controls">
+				<div class="filters-row" id="raceRow"></div>
+				<div class="filters-row" id="levelRow"></div>
+				<div class="card-row" id="cardRow"></div>
+				<div class="feedback" id="feedbackRow">
+					<button type="button" class="feedback-btn selected" data-value="close">奇数</button>
+					<button type="button" class="feedback-btn" data-value="not_close">偶数 / 0</button>
+				</div>
+				<button id="addGuessBtn" disabled>进场！</button>
+			</div>
+		</section>
+
+		<section class="panel" style="padding-bottom: 0;">
+			<div class="panel-header">
+				<h2>进场卡牌记录</h2>
+				<button id="resetBtn" class="danger btn-sm">清除全部</button>
+			</div>
+			<table class="history-table" id="historyTable">
+				<thead>
+				<tr>
+					<th>#</th>
+					<th>卡牌</th>
+					<th>种族</th>
+					<th>等级</th>
+					<th>单位数</th>
+					<th>价值</th>
+					<th>隐刀</th>
+					<th></th>
+				</tr>
+				</thead>
+				<tbody></tbody>
+			</table>
+		</section>
+	</div>
+
+	<aside class="sidebar-right">
+		<section class="panel" style="padding-bottom: 0;">
+			<div class="panel-header">
+				<h2>可能的预言牌</h2>
+				<div class="candidate-actions">
+					<label>排序
+						<select id="sortSelect">
+							<option value="priority">区分度</option>
+							<option value="race">种族</option>
+							<option value="number">单位数</option>
+							<option value="value">价值</option>
+						</select>
+					</label>
+				</div>
+			</div>
+			<div id="constraintSummary" class="constraint-summary"></div>
+			<table class="candidates-table" id="candidatesTable">
+				<thead>
+				<tr>
+					<th>卡牌 <span id="candidateStats" class="muted"></span></th>
+					<th>种族</th>
+					<th>单位数</th>
+					<th>价值</th>
+					<th>匹配维度</th>
+					<th>区分度</th>
+					<th>操作</th>
+				</tr>
+				</thead>
+				<tbody></tbody>
+			</table>
+		</section>
+	</aside>
+</main>
+
+<div id="prophecyModal" class="modal">
+	<div class="modal-content">
+		<div class="modal-header">
+			<h2>预言确认</h2>
+			<span class="close-btn">&times;</span>
+		</div>
+		<div class="modal-body">
+			<div class="modal-icon">★</div>
+			<p>确认这是预言牌？</p>
+			<p class="warning-text">这将清空所有记录并开始新一轮</p>
+		</div>
+		<div class="modal-footer">
+			<button id="cancelProphecyBtn" class="secondary-btn">取消</button>
+			<button id="confirmProphecyBtn" class="primary-btn">确认预言</button>
+		</div>
+	</div>
+</div>
+
+<script src="app.js"></script>
+</body>
+
+</html>
