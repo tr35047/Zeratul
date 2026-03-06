@@ -3,8 +3,11 @@
 > 注意：此项目出自B站up 游戏产业废弃物@bilibili，我在这个站点的基础上做了一些优化性改动
 >
 > 原网站: https://gameindustryremnant.github.io/SCTavernVoidSeekerPublic/
+> 
 > 原作者: 游戏产业废弃物@bilibili
+> 
 > 技术栈: 原生 HTML + CSS + JavaScript（无框架）
+> 
 > 最后更新: 2026/3/6
 
 ## 网站概述
