@@ -2,7 +2,7 @@
 	"use strict";
 
 	var CLOSE_THRESHOLD = 200;
-	var MAX_EXPANSION_PACKS = 2;
+	var MAX_EXPANSION_PACKS = 100;
 
 	var RACE_CN = {
 		'Protess': '星灵',
