@@ -64,13 +64,22 @@
 	</div>
 
 	<aside class="sidebar-right">
+		<section class="panel prediction-panel" id="predictionPanel">
+			<div class="panel-header">
+				<h2>精准预测</h2>
+			</div>
+			<!-- 收敛状态 -->
+			<div id="predictionStatus" class="prediction-status"></div>
+			<!-- 推荐牌列表 -->
+			<div id="predictionRecommendations" class="prediction-recommendations"></div>
+		</section>
+
 		<section class="panel" style="padding-bottom: 0;">
 			<div class="panel-header">
 				<h2>可能的预言牌</h2>
 				<div class="candidate-actions">
 					<label>排序
 						<select id="sortSelect">
-							<option value="priority">区分度</option>
 							<option value="race">种族</option>
 							<option value="number">单位数</option>
 							<option value="value">价值</option>
@@ -87,7 +96,6 @@
 					<th>单位数</th>
 					<th>价值</th>
 					<th>匹配维度</th>
-					<th>区分度</th>
 					<th>操作</th>
 				</tr>
 				</thead>

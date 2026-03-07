@@ -67,7 +67,7 @@
 		state: {
 			cards: [],
 			guesses: [],
-			sortBy: 'priority',
+			sortBy: 'race',
 			selectedRace: 'Neutral',
 			selectedLevel: '1',
 			selectedCardId: '',
@@ -100,7 +100,9 @@
 				cancelProphecyBtn: document.getElementById('cancelProphecyBtn'),
 				confirmProphecyBtn: document.getElementById('confirmProphecyBtn'),
 				closeProphecyBtn: document.querySelector('#prophecyModal .close-btn'),
-				feedbackRow: document.getElementById('feedbackRow')
+				feedbackRow: document.getElementById('feedbackRow'),
+				predictionStatus: document.getElementById('predictionStatus'),
+				predictionRecommendations: document.getElementById('predictionRecommendations')
 			};
 		},
 
@@ -561,6 +563,139 @@
 			return {score: Math.min(5, Math.max(0, finalScore)), dims: dims};
 		},
 
+		// --- Prediction ---
+
+		calcRecommendations: function (candidates) {
+			var self = this;
+			var cards = this.state.cards;
+			var guesses = this.state.guesses;
+
+			// All usable cards (from enabled packs, excluding already guessed)
+			var usedIds = {};
+			for (var i = 0; i < guesses.length; i++) {
+				usedIds[guesses[i].cardId] = true;
+			}
+			var pool = cards.filter(function (c) {
+				return !usedIds[c.id];
+			});
+
+			var results = [];
+			for (var pi = 0; pi < pool.length; pi++) {
+				var p = pool[pi];
+				var closeCount = 0;
+				for (var ci = 0; ci < candidates.length; ci++) {
+					if (self.isClose(p, candidates[ci])) closeCount++;
+				}
+				var notCloseCount = candidates.length - closeCount;
+				var total = candidates.length;
+				var infoGain = 0;
+				if (total > 0 && closeCount > 0 && notCloseCount > 0) {
+					var p1 = closeCount / total;
+					var p2 = notCloseCount / total;
+					infoGain = -p1 * Math.log2(p1) - p2 * Math.log2(p2);
+				}
+				results.push({card: p, infoGain: infoGain, closeCount: closeCount, notCloseCount: notCloseCount});
+			}
+
+			results.sort(function (a, b) {
+				return b.infoGain - a.infoGain;
+			});
+			return results.slice(0, 3);
+		},
+
+		renderPrediction: function () {
+			var self = this;
+			var candidates = this.getCandidates();
+			var statusEl = this.els.predictionStatus;
+			var recEl = this.els.predictionRecommendations;
+
+			var coreTotal = 0;
+			this.state.cards.forEach(function (c) {
+				if (c.isCoreSet) coreTotal++;
+			});
+
+			if (this.state.guesses.length === 0) {
+				statusEl.innerHTML =
+					'<div class="prediction-progress-info">' +
+					'<span>候选 <strong>' + candidates.length + '</strong> / ' + coreTotal + '</span>' +
+					'</div>' +
+					'<div class="prediction-progress-bar"><div class="prediction-progress-fill" style="width:0%"></div></div>';
+				recEl.innerHTML = '<div class="prediction-hint">请先进场一张卡牌，获得隐刀反馈后开始推荐</div>';
+				return;
+			}
+
+			if (candidates.length === 0) {
+				statusEl.innerHTML = '<div class="prediction-warn">无候选牌，请检查记录</div>';
+				recEl.innerHTML = '';
+				return;
+			}
+
+			if (candidates.length === 1) {
+				var c = candidates[0];
+				statusEl.innerHTML = '';
+				recEl.innerHTML =
+					'<div class="prediction-confirmed">' +
+					'<div class="prediction-confirmed-label">预言牌已锁定</div>' +
+					'<div class="prediction-confirmed-card">' + c.id + '</div>' +
+					'<div class="prediction-confirmed-info">' +
+					raceName(c.race) + ' · ' + c.number + '单位 · ' + c.value + '价值' +
+					'</div></div>';
+				return;
+			}
+
+			// |S| > 1: show convergence progress + recommendations
+			var steps = Math.ceil(Math.log2(candidates.length));
+			var pct = coreTotal > 0 ? Math.round((1 - candidates.length / coreTotal) * 100) : 0;
+			statusEl.innerHTML =
+				'<div class="prediction-progress-info">' +
+				'<span>候选 <strong>' + candidates.length + '</strong> / ' + coreTotal + '</span>' +
+				'<span>预计还需 <strong>' + steps + '</strong> 步</span>' +
+				'</div>' +
+				'<div class="prediction-progress-bar"><div class="prediction-progress-fill" style="width:' + pct + '%"></div></div>';
+
+			var recs = this.calcRecommendations(candidates);
+			if (recs.length === 0) {
+				recEl.innerHTML = '<div class="prediction-hint">无可推荐牌</div>';
+				return;
+			}
+
+			var html = '<div class="prediction-rec-title">推荐进场牌</div>';
+			for (var i = 0; i < recs.length; i++) {
+				var r = recs[i];
+				var gainPct = Math.round(r.infoGain * 100);
+				html += '<div class="prediction-rec-item">' +
+					'<span class="prediction-rec-rank">#' + (i + 1) + '</span>' +
+					'<div class="prediction-rec-body">' +
+					'<div class="prediction-rec-name">' + r.card.id + '</div>' +
+					'<div class="prediction-rec-meta">' +
+					raceName(r.card.race) + ' · Lv' + r.card.level +
+					'</div>' +
+					'<div class="prediction-rec-split">' +
+					'<span class="prediction-split-close">奇数→剩' + r.closeCount + '</span>' +
+					'<span class="prediction-split-not">偶数→剩' + r.notCloseCount + '</span>' +
+					'</div>' +
+					'</div>' +
+					'<div class="prediction-rec-gain">' +
+					'<div class="prediction-gain-value">' + gainPct + '%</div>' +
+					'<div class="prediction-gain-label">信息增益</div>' +
+					'</div>' +
+					'<button class="prediction-rec-use" data-cardid="' + r.card.id + '" data-race="' + r.card.race + '" data-level="' + r.card.level + '">选用</button>' +
+					'</div>';
+			}
+			recEl.innerHTML = html;
+
+			recEl.querySelectorAll('.prediction-rec-use').forEach(function (btn) {
+				btn.addEventListener('click', function () {
+					self.state.selectedRace = btn.dataset.race;
+					self.state.selectedLevel = btn.dataset.level;
+					self.state.selectedCardId = btn.dataset.cardid;
+					self.els.addGuessBtn.disabled = false;
+					self.renderRaceLevelSelectors();
+					self.renderCardButtons();
+				});
+			});
+		},
+
 		// --- Rendering ---
 
 		renderAll: function () {
@@ -568,6 +703,7 @@
 			this.renderCardButtons();
 			this.renderHistory();
 			this.renderCandidates();
+			this.renderPrediction();
 		},
 
 		renderRaceLevelSelectors: function () {
@@ -709,11 +845,6 @@
 
 			var sortBy = this.state.sortBy;
 			list.sort(function (a, b) {
-				if (sortBy === 'priority') {
-					if (a._priority !== b._priority) return b._priority - a._priority;
-					if (a.race !== b.race) return a.race.localeCompare(b.race);
-					return a.value - b.value;
-				}
 				if (sortBy === 'race') {
 					if (a.race !== b.race) return a.race.localeCompare(b.race);
 					if (a.number !== b.number) return a.number - b.number;
@@ -752,21 +883,12 @@
 					dimsHtml = '<span class="dim-none">-</span>';
 				}
 
-				// 5-block indicator
-				var blocks = Math.round(c._priority);
-				var blocksHtml = '';
-				for (var bi = 0; bi < 5; bi++) {
-					var blockCls = bi < blocks ? (blocks >= 4 ? 'block-high' : blocks >= 2 ? 'block-mid' : 'block-low') : 'block-empty';
-					blocksHtml += '<span class="dist-block ' + blockCls + '"></span>';
-				}
-
 				return '<tr class="' + (hasClose ? 'close-signal' : '') + '">' +
 					'<td>' + c.id + '</td>' +
 					'<td>' + raceName(c.race) + '</td>' +
 					'<td>' + c.number + '</td>' +
 					'<td>' + c.value + '</td>' +
 					'<td class="dims-cell">' + dimsHtml + '</td>' +
-					'<td class="dist-cell"><div class="dist-blocks">' + blocksHtml + '</div></td>' +
 					'<td class="action-cell">' +
 					'<button class="prophecy-btn" data-action="prophecy">预言牌</button>' +
 					'</td></tr>';

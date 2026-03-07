@@ -871,21 +871,19 @@ tbody tr:nth-child(even):hover {
 	overflow-y: auto;
 }
 
-/* 候选牌表格列宽分配 — 防止 table-layout:fixed 等宽导致内容截断 */
+/* 候选牌表格列宽分配 */
 .candidates-table th:nth-child(1),
-.candidates-table td:nth-child(1) { width: 20%; }
+.candidates-table td:nth-child(1) { width: 22%; }
 .candidates-table th:nth-child(2),
-.candidates-table td:nth-child(2) { width: 10%; }
+.candidates-table td:nth-child(2) { width: 12%; }
 .candidates-table th:nth-child(3),
-.candidates-table td:nth-child(3) { width: 10%; }
+.candidates-table td:nth-child(3) { width: 12%; }
 .candidates-table th:nth-child(4),
-.candidates-table td:nth-child(4) { width: 10%; }
+.candidates-table td:nth-child(4) { width: 12%; }
 .candidates-table th:nth-child(5),
-.candidates-table td:nth-child(5) { width: 30%; }
+.candidates-table td:nth-child(5) { width: 28%; }
 .candidates-table th:nth-child(6),
 .candidates-table td:nth-child(6) { width: 14%; }
-.candidates-table th:nth-child(7),
-.candidates-table td:nth-child(7) { width: 14%; }
 
 /* 小号按钮 */
 .btn-sm {
@@ -1133,6 +1131,184 @@ tbody tr:nth-child(even):hover {
 #candidateStats {
 	font-weight: 400;
 	margin-left: 4px;
+}
+
+/* ================================================
+   精准预测面板
+   ================================================ */
+.prediction-panel {
+	flex: 0 0 auto !important;
+	min-height: auto !important;
+	margin-bottom: 0;
+}
+
+.prediction-status {
+	margin-bottom: var(--sp-sm);
+}
+
+.prediction-progress-info {
+	display: flex;
+	justify-content: space-between;
+	font-size: 13px;
+	color: var(--text);
+	margin-bottom: var(--sp-xs);
+}
+
+.prediction-progress-info strong {
+	color: var(--accent-glow);
+}
+
+.prediction-progress-bar {
+	width: 100%;
+	height: 6px;
+	background: rgba(255, 255, 255, 0.08);
+	border-radius: 3px;
+	overflow: hidden;
+}
+
+.prediction-progress-fill {
+	height: 100%;
+	background: linear-gradient(90deg, var(--accent-dim) 0%, var(--accent-glow) 100%);
+	border-radius: 3px;
+	transition: width 0.4s ease;
+}
+
+.prediction-warn {
+	color: var(--danger);
+	font-size: 13px;
+	padding: var(--sp-sm) var(--sp-md);
+	border-radius: var(--radius);
+	background: rgba(229, 57, 53, 0.08);
+	border-left: 2px solid var(--danger);
+}
+
+.prediction-hint {
+	color: var(--muted);
+	font-size: 13px;
+	text-align: center;
+	padding: var(--sp-sm);
+}
+
+.prediction-rec-title {
+	font-size: 12px;
+	color: var(--muted);
+	text-transform: uppercase;
+	letter-spacing: 0.5px;
+	margin-bottom: var(--sp-sm);
+	margin-top: var(--sp-sm);
+}
+
+.prediction-rec-item {
+	display: flex;
+	align-items: center;
+	gap: var(--sp-sm);
+	padding: var(--sp-sm) var(--sp-md);
+	border-radius: var(--radius);
+	background: rgba(0, 0, 0, 0.15);
+	border: 1px solid var(--border);
+	margin-bottom: var(--sp-xs);
+	transition: border-color 0.15s, background 0.15s;
+}
+
+.prediction-rec-item:hover {
+	border-color: var(--accent-dim);
+	background: rgba(0, 188, 212, 0.04);
+}
+
+.prediction-rec-rank {
+	font-size: 14px;
+	font-weight: 700;
+	color: var(--gold);
+	min-width: 24px;
+	flex-shrink: 0;
+}
+
+.prediction-rec-body {
+	flex: 1;
+	min-width: 0;
+}
+
+.prediction-rec-name {
+	font-size: 14px;
+	font-weight: 600;
+	color: var(--text-bright);
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.prediction-rec-meta {
+	font-size: 12px;
+	color: var(--muted);
+}
+
+.prediction-rec-split {
+	display: flex;
+	gap: var(--sp-sm);
+	font-size: 11px;
+	margin-top: 2px;
+}
+
+.prediction-split-close {
+	color: var(--accent);
+}
+
+.prediction-split-not {
+	color: var(--muted);
+}
+
+.prediction-rec-gain {
+	text-align: center;
+	flex-shrink: 0;
+	min-width: 50px;
+}
+
+.prediction-gain-value {
+	font-size: 16px;
+	font-weight: 700;
+	color: var(--accent-glow);
+}
+
+.prediction-gain-label {
+	font-size: 10px;
+	color: var(--muted);
+}
+
+.prediction-rec-use {
+	font-size: 12px;
+	padding: 4px 10px;
+	flex-shrink: 0;
+}
+
+/* 确认状态 — 预言牌锁定 */
+.prediction-confirmed {
+	text-align: center;
+	padding: var(--sp-md) var(--sp-lg);
+	border-radius: var(--radius-lg);
+	background: rgba(156, 95, 255, 0.1);
+	border: 1px solid var(--purple);
+	box-shadow: 0 0 16px rgba(156, 95, 255, 0.2), inset 0 0 20px rgba(156, 95, 255, 0.05);
+}
+
+.prediction-confirmed-label {
+	font-size: 12px;
+	text-transform: uppercase;
+	letter-spacing: 1px;
+	color: var(--purple-glow);
+	margin-bottom: var(--sp-xs);
+}
+
+.prediction-confirmed-card {
+	font-size: 20px;
+	font-weight: 700;
+	color: var(--purple-glow);
+	text-shadow: 0 0 12px rgba(156, 95, 255, 0.6);
+	margin-bottom: var(--sp-xs);
+}
+
+.prediction-confirmed-info {
+	font-size: 13px;
+	color: var(--text);
 }
 
 /* ================================================
