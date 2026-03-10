@@ -1312,23 +1312,35 @@ tbody tr:nth-child(even):hover {
 }
 
 /* ================================================
-   Responsive — Tablet
+   Responsive — Tablet & Mobile
    ================================================ */
 @media (max-width: 768px) {
+	html, body {
+		overflow: auto;
+		height: auto;
+	}
+
 	.app-header {
-		padding: var(--sp-md);
+		padding: var(--sp-sm) var(--sp-md);
 	}
 
 	.app-header h1 {
-		font-size: 18px;
+		font-size: 16px;
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
 	}
 
-	/* 三栏变单栏 */
+	/* 三栏变单栏，允许纵向滚动 */
 	.app-main {
 		flex-direction: column;
 		padding: 0 var(--sp-sm) var(--sp-lg);
+		overflow: auto;
+		max-width: 100%;
+		margin-top: 44px;
 	}
 
+	/* ---- 卡包选择：横向排列 ---- */
 	.sidebar {
 		flex: none;
 		position: static;
@@ -1342,7 +1354,6 @@ tbody tr:nth-child(even):hover {
 		gap: var(--sp-sm);
 		padding: 14px 16px;
 		min-height: auto;
-		background-size: 100% 100%;
 	}
 
 	.sidebar-frame h2 {
@@ -1353,7 +1364,15 @@ tbody tr:nth-child(even):hover {
 	.sidebar .dataset-controls {
 		flex-direction: row;
 		flex-wrap: wrap;
-		gap: var(--sp-xs);
+		gap: var(--sp-xs) var(--sp-sm);
+		align-items: center;
+		justify-content: center;
+	}
+
+	.sidebar .dataset-controls label {
+		width: auto;
+		font-size: 13px;
+		padding: 4px 8px;
 	}
 
 	.sidebar #datasetInfo {
@@ -1361,6 +1380,7 @@ tbody tr:nth-child(even):hover {
 		text-align: center;
 	}
 
+	/* ---- 中间主内容 ---- */
 	.main-content {
 		flex: none;
 		gap: var(--sp-md);
@@ -1368,9 +1388,33 @@ tbody tr:nth-child(even):hover {
 		padding-bottom: 0;
 	}
 
+	/* ---- 右侧栏 ---- */
 	.sidebar-right {
 		flex: none;
-		padding: 0 var(--sp-sm);
+		padding: 0 var(--sp-sm) var(--sp-md);
+	}
+
+	/* 面板内的表格自适应高度，取消 flex:1 撑满 */
+	.main-content > .panel:last-child,
+	.sidebar-right > .panel {
+		flex: none;
+		min-height: auto;
+	}
+
+	/* 表格体取消固定高度滚动，改为自然撑开 */
+	.history-table,
+	.candidates-table {
+		display: flex;
+		flex-direction: column;
+		flex: none;
+		min-height: auto;
+	}
+
+	.history-table tbody,
+	.candidates-table tbody {
+		flex: none;
+		max-height: 40vh;
+		overflow-y: auto;
 	}
 
 	.dataset-controls {
@@ -1384,26 +1428,40 @@ tbody tr:nth-child(even):hover {
 
 	.panel {
 		padding: var(--sp-sm) var(--sp-md);
-		overflow: auto;
-	}
-
-	table {
-		display: block;
-		overflow-x: auto;
-		white-space: nowrap;
 	}
 
 	th, td {
-		padding: 8px;
+		padding: 6px 8px;
+		font-size: 13px;
+	}
+
+	/* 精准预测面板 */
+	.prediction-panel {
+		flex: none !important;
 	}
 }
 
 /* ================================================
-   Responsive — Mobile
+   Responsive — Small Mobile
    ================================================ */
 @media (max-width: 480px) {
+	.app-header {
+		padding: var(--sp-xs) var(--sp-sm);
+		height: 36px;
+	}
+
 	.app-header h1 {
-		font-size: 16px;
+		font-size: 14px;
+	}
+
+	.header-logo {
+		height: 22px;
+	}
+
+	.app-main {
+		margin-top: 40px;
+		border: none;
+		border-radius: 0;
 	}
 
 	.panel {
@@ -1411,21 +1469,37 @@ tbody tr:nth-child(even):hover {
 		border-radius: var(--radius);
 	}
 
-	.race-btn, .level-btn, .card-btn {
-		padding: 8px 12px;
+	.panel h2 {
 		font-size: 14px;
+	}
+
+	.race-btn, .level-btn, .card-btn {
+		padding: 6px 10px;
+		font-size: 13px;
 	}
 
 	button {
-		padding: 10px 14px;
-		font-size: 14px;
+		padding: 8px 12px;
+		font-size: 13px;
 	}
 
 	.feedback {
-		gap: var(--sp-lg);
+		gap: var(--sp-md);
 	}
 
-	.feedback label {
-		font-size: 14px;
+	th, td {
+		padding: 5px 6px;
+		font-size: 12px;
+	}
+
+	/* 候选牌表格列宽调整 */
+	.candidates-table th:nth-child(5),
+	.candidates-table td:nth-child(5) { width: 22%; }
+	.candidates-table th:nth-child(6),
+	.candidates-table td:nth-child(6) { width: 18%; }
+
+	.sidebar .dataset-controls label {
+		font-size: 12px;
+		padding: 3px 6px;
 	}
 }
