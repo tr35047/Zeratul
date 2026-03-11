@@ -18,9 +18,8 @@
 <main class="app-main">
 	<aside class="sidebar">
 		<div class="sidebar-frame">
-			<h2>卡包选择</h2>
+			<h2>卡包选择<span id="datasetInfo" class="muted"></span></h2>
 			<div class="dataset-controls" id="packToggles"></div>
-			<div id="datasetInfo" class="muted"></div>
 		</div>
 	</aside>
 
@@ -68,6 +67,7 @@
 			<div class="panel-header">
 				<h2>精准预测</h2>
 			</div>
+			<div class="prediction-level-filter" id="predictionLevelFilter"></div>
 			<!-- 收敛状态 -->
 			<div id="predictionStatus" class="prediction-status"></div>
 			<!-- 推荐牌列表 -->

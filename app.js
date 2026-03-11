@@ -71,7 +71,8 @@
 			selectedRace: 'Neutral',
 			selectedLevel: '1',
 			selectedCardId: '',
-			enabledPacks: ['core']
+			enabledPacks: ['core'],
+			predictionLevel: null
 		},
 
 		init: function () {
@@ -102,7 +103,8 @@
 				closeProphecyBtn: document.querySelector('#prophecyModal .close-btn'),
 				feedbackRow: document.getElementById('feedbackRow'),
 				predictionStatus: document.getElementById('predictionStatus'),
-				predictionRecommendations: document.getElementById('predictionRecommendations')
+				predictionRecommendations: document.getElementById('predictionRecommendations'),
+				predictionLevelFilter: document.getElementById('predictionLevelFilter')
 			};
 		},
 
@@ -176,7 +178,8 @@
 					var names = datasets.map(function (d) {
 						return d.name;
 					}).join(', ');
-					self.els.datasetInfo.textContent = ' 总卡牌数: ' + cards.length;
+					// self.els.datasetInfo.textContent = ' ' + cards.length;
+					self.els.datasetInfo.textContent = '';
 					self.renderAll();
 				})
 				.catch(function (err) {
@@ -569,6 +572,7 @@
 			var self = this;
 			var cards = this.state.cards;
 			var guesses = this.state.guesses;
+			var predictionLevel = this.state.predictionLevel;
 
 			// All usable cards (from enabled packs, excluding already guessed)
 			var usedIds = {};
@@ -576,7 +580,9 @@
 				usedIds[guesses[i].cardId] = true;
 			}
 			var pool = cards.filter(function (c) {
-				return !usedIds[c.id];
+				if (usedIds[c.id]) return false;
+				if (predictionLevel !== null && c.level !== predictionLevel) return false;
+				return true;
 			});
 
 			var results = [];
@@ -600,7 +606,7 @@
 			results.sort(function (a, b) {
 				return b.infoGain - a.infoGain;
 			});
-			return results.slice(0, 3);
+			return results.slice(0, 5);
 		},
 
 		renderPrediction: function () {
@@ -621,12 +627,14 @@
 					'</div>' +
 					'<div class="prediction-progress-bar"><div class="prediction-progress-fill" style="width:0%"></div></div>';
 				recEl.innerHTML = '<div class="prediction-hint">请先进场一张卡牌，获得隐刀反馈后开始推荐</div>';
+				this.els.predictionLevelFilter.innerHTML = '';
 				return;
 			}
 
 			if (candidates.length === 0) {
 				statusEl.innerHTML = '<div class="prediction-warn">无候选牌，请检查记录</div>';
 				recEl.innerHTML = '';
+				this.els.predictionLevelFilter.innerHTML = '';
 				return;
 			}
 
@@ -640,6 +648,7 @@
 					'<div class="prediction-confirmed-info">' +
 					raceName(c.race) + ' · ' + c.number + '单位 · ' + c.value + '价值' +
 					'</div></div>';
+				this.els.predictionLevelFilter.innerHTML = '';
 				return;
 			}
 
@@ -652,6 +661,32 @@
 				'<span>预计还需 <strong>' + steps + '</strong> 步</span>' +
 				'</div>' +
 				'<div class="prediction-progress-bar"><div class="prediction-progress-fill" style="width:' + pct + '%"></div></div>';
+
+			// Render level filter buttons
+			var levelSet = {};
+			var allPool = this.state.cards;
+			var usedIds = {};
+			for (var ui = 0; ui < this.state.guesses.length; ui++) {
+				usedIds[this.state.guesses[ui].cardId] = true;
+			}
+			for (var li = 0; li < allPool.length; li++) {
+				if (!usedIds[allPool[li].id]) levelSet[allPool[li].level] = true;
+			}
+			var availLevels = Object.keys(levelSet).map(Number).sort(function (a, b) { return a - b; });
+			var predLvl = this.state.predictionLevel;
+			var filterHtml = availLevels.map(function (lv) {
+				var sel = predLvl === lv ? ' selected' : '';
+				return '<button type="button" class="pred-level-btn' + sel + '" data-level="' + lv + '">' + lv + '</button>';
+			}).join('');
+			this.els.predictionLevelFilter.innerHTML = filterHtml;
+
+			this.els.predictionLevelFilter.querySelectorAll('.pred-level-btn').forEach(function (btn) {
+				btn.addEventListener('click', function () {
+					var lv = Number(btn.dataset.level);
+					self.state.predictionLevel = (self.state.predictionLevel === lv) ? null : lv;
+					self.renderPrediction();
+				});
+			});
 
 			var recs = this.calcRecommendations(candidates);
 			if (recs.length === 0) {
@@ -904,7 +939,7 @@
 			cards.forEach(function (c) {
 				if (c.isCoreSet) coreTotal++;
 			});
-			this.els.candidateStats.textContent = list.length + ' / ' + coreTotal;
+			this.els.candidateStats.textContent = list.length + '/' + coreTotal;
 		},
 
 		renderConstraintSummary: function (constraints) {
