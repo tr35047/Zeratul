@@ -72,7 +72,7 @@
 			selectedLevel: '1',
 			selectedCardId: '',
 			enabledPacks: ['core'],
-			predictionLevel: null
+			predictionLevels: []
 		},
 
 		init: function () {
@@ -572,7 +572,7 @@
 			var self = this;
 			var cards = this.state.cards;
 			var guesses = this.state.guesses;
-			var predictionLevel = this.state.predictionLevel;
+			var predictionLevels = this.state.predictionLevels;
 
 			// All usable cards (from enabled packs, excluding already guessed)
 			var usedIds = {};
@@ -581,7 +581,7 @@
 			}
 			var pool = cards.filter(function (c) {
 				if (usedIds[c.id]) return false;
-				if (predictionLevel !== null && c.level !== predictionLevel) return false;
+				if (predictionLevels.length > 0 && predictionLevels.indexOf(c.level) === -1) return false;
 				return true;
 			});
 
@@ -673,9 +673,9 @@
 				if (!usedIds[allPool[li].id]) levelSet[allPool[li].level] = true;
 			}
 			var availLevels = Object.keys(levelSet).map(Number).sort(function (a, b) { return a - b; });
-			var predLvl = this.state.predictionLevel;
+			var predLvls = this.state.predictionLevels;
 			var filterHtml = availLevels.map(function (lv) {
-				var sel = predLvl === lv ? ' selected' : '';
+				var sel = predLvls.indexOf(lv) !== -1 ? ' selected' : '';
 				return '<button type="button" class="pred-level-btn' + sel + '" data-level="' + lv + '">' + lv + '</button>';
 			}).join('');
 			this.els.predictionLevelFilter.innerHTML = filterHtml;
@@ -683,7 +683,12 @@
 			this.els.predictionLevelFilter.querySelectorAll('.pred-level-btn').forEach(function (btn) {
 				btn.addEventListener('click', function () {
 					var lv = Number(btn.dataset.level);
-					self.state.predictionLevel = (self.state.predictionLevel === lv) ? null : lv;
+					var idx = self.state.predictionLevels.indexOf(lv);
+					if (idx === -1) {
+						self.state.predictionLevels.push(lv);
+					} else {
+						self.state.predictionLevels.splice(idx, 1);
+					}
 					self.renderPrediction();
 				});
 			});
