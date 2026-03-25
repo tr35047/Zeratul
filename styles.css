@@ -50,11 +50,6 @@ html, body {
 	overflow: hidden;
 }
 
-body {
-	display: flex;
-	flex-direction: column;
-}
-
 /* ---- 自定义滚动条 — SC2 风格 ---- */
 /* Firefox */
 * {
@@ -144,8 +139,8 @@ body {
 .app-header {
 	padding: var(--sp-lg) var(--sp-md);
 	text-align: center;
-	flex-shrink: 0;
 	position: fixed;
+	top: 0;
 	left: 0;
 	right: 0;
 	opacity: 1;
@@ -251,9 +246,8 @@ body {
 	display: flex;
 	gap: 0;
 	padding: 0 var(--sp-md) var(--sp-xl);
-	flex: 1;
-	min-height: 0;
-	overflow: hidden;
+	height: calc(100vh - 60px);
+	overflow: auto;
 }
 
 /* ---- 左侧侧栏 ---- */
@@ -1621,6 +1615,7 @@ tbody tr:nth-child(even):hover {
 		overflow: auto;
 		max-width: 100%;
 		margin-top: 44px;
+		height: calc(100vh - 44px);
 	}
 
 	/* ---- 卡包选择：横向排列 ---- */
@@ -1818,6 +1813,7 @@ tbody tr:nth-child(even):hover {
 
 	.app-main {
 		margin-top: 30px;
+		height: calc(100vh - 30px);
 		border: none;
 		border-radius: 0;
 	}
