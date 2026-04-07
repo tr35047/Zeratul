@@ -12,11 +12,12 @@
 <body>
 <header class="app-header">
 	<img class="header-logo" src="https://i.imgs.ovh/2026/03/06/OZ1E3b.webp" alt="SC2">
-	<h1>泽拉图的神秘妙妙猜牌工具 V2.0.1</h1>
+	<h1>Zeratul V3.0.0</h1>
 	<div class="header-links">
 		<a href="https://5d90d16b.pinme.dev" target="_blank" rel="noopener">酒馆共享黑名单</a>
 		<a href="https://www.bilibili.com/opus/1177424417637007376?spm_id_from=333.1387.0.0" target="_blank" rel="noopener">工具说明</a>
 		<a href="https://b23.tv/l605vgB" target="_blank" rel="noopener">@阿冰ベ</a>
+		<button id="updateNotifyBtn" class="update-notify-btn" type="button" title="查看更新日志">🔔</button>
 	</div>
 </header>
 
@@ -27,6 +28,9 @@
 			<div class="dataset-controls" id="packToggles"></div>
 		</div>
 	</aside>
+	<button id="sidebarToggle" class="sidebar-toggle" type="button" title="收起/展开卡包选择">
+		<span class="sidebar-toggle-icon">◀</span>
+	</button>
 
 	<div class="main-content">
 		<section class="panel">
@@ -83,6 +87,7 @@
 			<div class="panel-header">
 				<h2>可能的预言牌</h2>
 				<div class="candidate-actions">
+					<button id="restoreAllBtn" class="secondary-btn btn-sm" style="display:none">恢复全部排除</button>
 					<label>排序
 						<select id="sortSelect">
 							<option value="race">种族</option>
@@ -124,6 +129,51 @@
 		<div class="modal-footer">
 			<button id="cancelProphecyBtn" class="secondary-btn">取消</button>
 			<button id="confirmProphecyBtn" class="primary-btn">确认预言</button>
+		</div>
+	</div>
+</div>
+
+<div id="updateModal" class="modal">
+	<div class="modal-content update-modal-content">
+		<div class="modal-header">
+			<h2>V3.0.0 更新日志</h2>
+			<span class="close-btn" id="closeUpdateModal">&times;</span>
+		</div>
+		<div class="modal-body update-modal-body">
+			<div class="update-list">
+				<div class="update-item">
+					<span class="update-tag tag-ui">重要</span>
+					<span class="info-tips">IPFS网络升级为永久域名，最新地址 https://Zeratul-p.replit.app</span>
+				</div>
+				<div class="update-item">
+					<span class="update-tag tag-new">新增</span>
+					<span class="info-tips">酒馆共享黑名单功能，增加黑名单链接入口</span>
+				</div>
+				<div class="update-item">
+					<span class="update-tag tag-new">新增</span>
+					<span class="info-tips">卡包选择侧栏可折叠/展开，状态自动记忆</span>
+				</div>
+				<div class="update-item">
+					<span class="update-tag tag-new">新增</span>
+					<span class="info-tips">候选预言牌支持手动排除与恢复全部排除</span>
+				</div>
+				<div class="update-item">
+					<span class="update-tag tag-improve">优化</span>
+					<span class="info-tips">推荐进场牌展示改为双列网格布局，最多显示10张</span>
+				</div>
+				<div class="update-item">
+					<span class="update-tag tag-improve">优化</span>
+					<span class="info-tips">过滤信息增益为0的推荐牌，提升推荐质量</span>
+				</div>
+				<div class="update-item">
+					<span class="update-tag tag-improve">优化</span>
+					<span class="info-tips">清除记录和确认预言时同步清空排除列表</span>
+				</div>
+			</div>
+		</div>
+		<div class="modal-footer update-modal-footer">
+			<button id="dismissTodayBtn" class="secondary-btn">今日关闭</button>
+			<button id="closeUpdateBtn" class="primary-btn">关闭</button>
 		</div>
 	</div>
 </div>
