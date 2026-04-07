@@ -72,15 +72,23 @@
 			selectedLevel: '1',
 			selectedCardId: '',
 			enabledPacks: ['core'],
-			predictionLevels: []
+			predictionLevels: [],
+			sidebarCollapsed: false,
+			excludedCardIds: []
 		},
 
 		init: function () {
+			var self = this;
 			this.cacheEls();
 			this.restoreState();
 			this.bindEvents();
 			this.renderPackToggles();
+			this.restoreSidebarState();
 			this.reloadCards();
+			this.initUpdateModal();
+			window.addEventListener('resize', function () {
+				self.updateToggleIcon();
+			});
 		},
 
 		cacheEls: function () {
@@ -104,7 +112,14 @@
 				feedbackRow: document.getElementById('feedbackRow'),
 				predictionStatus: document.getElementById('predictionStatus'),
 				predictionRecommendations: document.getElementById('predictionRecommendations'),
-				predictionLevelFilter: document.getElementById('predictionLevelFilter')
+				predictionLevelFilter: document.getElementById('predictionLevelFilter'),
+			sidebarToggle: document.getElementById('sidebarToggle'),
+			sidebar: document.querySelector('.sidebar'),
+			updateModal: document.getElementById('updateModal'),
+			updateNotifyBtn: document.getElementById('updateNotifyBtn'),
+			closeUpdateModal: document.getElementById('closeUpdateModal'),
+			dismissTodayBtn: document.getElementById('dismissTodayBtn'),
+			closeUpdateBtn: document.getElementById('closeUpdateBtn')
 			};
 		},
 
@@ -124,6 +139,7 @@
 			this.els.resetBtn.addEventListener('click', function () {
 				if (confirm('确认清除全部记录？')) {
 					self.state.guesses = [];
+					self.state.excludedCardIds = [];
 					self.persist();
 					self.renderAll();
 				}
@@ -134,6 +150,9 @@
 				self.renderCandidates();
 			});
 
+			this.els.sidebarToggle.addEventListener('click', function () {
+				self.toggleSidebar();
+			});
 			this.els.cancelProphecyBtn.addEventListener('click', function () {
 				self.hideProphecyModal();
 			});
@@ -148,6 +167,74 @@
 					self.hideProphecyModal();
 				}
 			});
+		},
+
+		// --- Update modal ---
+
+		initUpdateModal: function () {
+			var self = this;
+			var today = new Date().toISOString().slice(0, 10);
+			var dismissed = '';
+			try { dismissed = localStorage.getItem('zeratul_update_dismissed') || ''; } catch (e) {}
+
+			if (dismissed !== today) {
+				this.els.updateModal.style.display = 'block';
+			}
+
+			this.els.updateNotifyBtn.addEventListener('click', function () {
+				self.els.updateModal.style.display = 'block';
+			});
+			this.els.closeUpdateModal.addEventListener('click', function () {
+				self.els.updateModal.style.display = 'none';
+			});
+			this.els.closeUpdateBtn.addEventListener('click', function () {
+				self.els.updateModal.style.display = 'none';
+			});
+			this.els.dismissTodayBtn.addEventListener('click', function () {
+				try { localStorage.setItem('zeratul_update_dismissed', today); } catch (e) {}
+				self.els.updateModal.style.display = 'none';
+			});
+			window.addEventListener('click', function (e) {
+				if (e.target === self.els.updateModal) {
+					self.els.updateModal.style.display = 'none';
+				}
+			});
+		},
+
+		// --- Sidebar collapse ---
+
+		toggleSidebar: function () {
+			this.state.sidebarCollapsed = !this.state.sidebarCollapsed;
+			this.els.sidebar.classList.toggle('collapsed', this.state.sidebarCollapsed);
+			this.updateToggleIcon();
+			try { localStorage.setItem('zeratul_sidebar_collapsed', this.state.sidebarCollapsed ? '1' : '0'); } catch (e) {}
+		},
+
+		updateToggleIcon: function () {
+			var icon = this.els.sidebarToggle.querySelector('.sidebar-toggle-icon');
+			var isMobile = window.innerWidth <= 768;
+			if (this.state.sidebarCollapsed) {
+				icon.textContent = isMobile ? '▼' : '▶';
+				this.els.sidebarToggle.title = '展开卡包选择';
+			} else {
+				icon.textContent = isMobile ? '▲' : '◀';
+				this.els.sidebarToggle.title = '收起卡包选择';
+			}
+		},
+
+		restoreSidebarState: function () {
+			try {
+				var saved = localStorage.getItem('zeratul_sidebar_collapsed');
+				if (saved === '1') {
+					this.state.sidebarCollapsed = true;
+					// 跳过动画直接设置
+					this.els.sidebar.classList.add('no-transition');
+					this.els.sidebar.classList.add('collapsed');
+					this.els.sidebar.offsetHeight; // force reflow
+					this.els.sidebar.classList.remove('no-transition');
+					this.updateToggleIcon();
+				}
+			} catch (e) {}
 		},
 
 		// --- Async data loading via dynamic <script> ---
@@ -221,6 +308,7 @@
 						});
 					}
 					self.state.guesses = [];
+					self.state.excludedCardIds = [];
 					self.persist();
 					self.renderPackToggles();
 					self.reloadCards();
@@ -254,6 +342,28 @@
 			this.renderAll();
 		},
 
+		excludeCandidate: function (cardId) {
+			if (this.state.excludedCardIds.indexOf(cardId) === -1) {
+				this.state.excludedCardIds.push(cardId);
+				this.persist();
+				this.renderAll();
+			}
+		},
+
+		restoreCandidate: function (cardId) {
+			this.state.excludedCardIds = this.state.excludedCardIds.filter(function (id) {
+				return id !== cardId;
+			});
+			this.persist();
+			this.renderAll();
+		},
+
+		restoreAllExcluded: function () {
+			this.state.excludedCardIds = [];
+			this.persist();
+			this.renderAll();
+		},
+
 		markProphecy: function () {
 			this.els.prophecyModal.style.display = 'block';
 		},
@@ -265,6 +375,7 @@
 		confirmProphecy: function () {
 			this.hideProphecyModal();
 			this.state.guesses = [];
+			this.state.excludedCardIds = [];
 			this.persist();
 			this.renderAll();
 		},
@@ -295,7 +406,7 @@
 		getCandidates: function () {
 			var self = this;
 			return this.state.cards.filter(function (c) {
-				return c.isCoreSet && self.candidateConsistent(c);
+				return c.isCoreSet && self.state.excludedCardIds.indexOf(c.id) === -1 && self.candidateConsistent(c);
 			});
 		},
 
@@ -603,10 +714,13 @@
 				results.push({card: p, infoGain: infoGain, closeCount: closeCount, notCloseCount: notCloseCount});
 			}
 
+			results = results.filter(function (r) {
+				return r.infoGain > 0;
+			});
 			results.sort(function (a, b) {
 				return b.infoGain - a.infoGain;
 			});
-			return results.slice(0, 5);
+			return results.slice(0, 10);
 		},
 
 		renderPrediction: function () {
@@ -699,7 +813,7 @@
 				return;
 			}
 
-			var html = '<div class="prediction-rec-title">推荐进场牌</div>';
+			var html = '<div class="prediction-rec-title">推荐进场牌</div><div class="prediction-rec-grid">';
 			for (var i = 0; i < recs.length; i++) {
 				var r = recs[i];
 				var gainPct = Math.round(r.infoGain * 100);
@@ -722,6 +836,7 @@
 					'<button class="prediction-rec-use" data-cardid="' + r.card.id + '" data-race="' + r.card.race + '" data-level="' + r.card.level + '">选用</button>' +
 					'</div>';
 			}
+			html += '</div>';
 			recEl.innerHTML = html;
 
 			recEl.querySelectorAll('.prediction-rec-use').forEach(function (btn) {
@@ -931,6 +1046,7 @@
 					'<td class="dims-cell">' + dimsHtml + '</td>' +
 					'<td class="action-cell">' +
 					'<button class="prophecy-btn" data-action="prophecy">预言牌</button>' +
+					'<button class="exclude-btn" data-action="exclude" data-cardid="' + c.id + '">排除</button>' +
 					'</td></tr>';
 			}).join('');
 
@@ -939,12 +1055,29 @@
 					self.markProphecy();
 				});
 			});
+			this.els.candidatesTableBody.querySelectorAll('button[data-action="exclude"]').forEach(function (btn) {
+				btn.addEventListener('click', function () {
+					self.excludeCandidate(btn.dataset.cardid);
+				});
+			});
 
 			var coreTotal = 0;
 			cards.forEach(function (c) {
 				if (c.isCoreSet) coreTotal++;
 			});
+			var excludedCount = this.state.excludedCardIds.length;
 			this.els.candidateStats.textContent = list.length + '/' + coreTotal;
+
+			// 恢复全部按钮
+			var restoreBtn = document.getElementById('restoreAllBtn');
+			if (restoreBtn) {
+				if (excludedCount > 0) {
+					restoreBtn.style.display = '';
+					restoreBtn.onclick = function () { self.restoreAllExcluded(); };
+				} else {
+					restoreBtn.style.display = 'none';
+				}
+			}
 		},
 
 		renderConstraintSummary: function (constraints) {
