@@ -813,6 +813,9 @@
 				return;
 			}
 
+			var maxRecs = window.innerWidth <= 768 ? 8 : recs.length;
+			if (recs.length > maxRecs) recs = recs.slice(0, maxRecs);
+
 			var html = '<div class="prediction-rec-title">推荐进场牌</div><div class="prediction-rec-grid">';
 			for (var i = 0; i < recs.length; i++) {
 				var r = recs[i];
