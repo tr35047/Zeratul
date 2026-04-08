@@ -788,20 +788,20 @@
 			}
 			var availLevels = Object.keys(levelSet).map(Number).sort(function (a, b) { return a - b; });
 			var predLvls = this.state.predictionLevels;
-			var filterHtml = availLevels.map(function (lv) {
-				var sel = predLvls.indexOf(lv) !== -1 ? ' selected' : '';
+			var allSel = predLvls.length === 0 ? ' selected' : '';
+			var filterHtml = '<button type="button" class="pred-level-btn' + allSel + '" data-level="all">全部</button>';
+			filterHtml += availLevels.map(function (lv) {
+				var sel = predLvls.length === 1 && predLvls[0] === lv ? ' selected' : '';
 				return '<button type="button" class="pred-level-btn' + sel + '" data-level="' + lv + '">' + lv + '</button>';
 			}).join('');
 			this.els.predictionLevelFilter.innerHTML = filterHtml;
 
 			this.els.predictionLevelFilter.querySelectorAll('.pred-level-btn').forEach(function (btn) {
 				btn.addEventListener('click', function () {
-					var lv = Number(btn.dataset.level);
-					var idx = self.state.predictionLevels.indexOf(lv);
-					if (idx === -1) {
-						self.state.predictionLevels.push(lv);
+					if (btn.dataset.level === 'all') {
+						self.state.predictionLevels = [];
 					} else {
-						self.state.predictionLevels.splice(idx, 1);
+						self.state.predictionLevels = [Number(btn.dataset.level)];
 					}
 					self.renderPrediction();
 				});
