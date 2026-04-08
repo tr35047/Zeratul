@@ -364,7 +364,7 @@ body {
 	align-items: center;
 	gap: var(--sp-md);
 	margin-left: auto;
-	margin-right: var(--sp-md);
+	/*margin-right: var(--sp-md);*/
 	font-size: 12px;
 	flex-shrink: 0;
 	white-space: nowrap;
