@@ -855,10 +855,10 @@ button {
 	transition: all 0.15s ease;
 }
 
-button:hover:not(:disabled) {
+/* button:hover:not(:disabled) {
 	background: linear-gradient(180deg, #00a8ff 0%, #016f7d 100%);
 	box-shadow: 0 0 10px rgba(0, 229, 255, 0.3);
-}
+} */
 
 button.danger {
 	background: linear-gradient(180deg, var(--danger) 0%, var(--danger-dim) 100%);
@@ -1524,7 +1524,7 @@ tbody tr:nth-child(even):hover {
 	border: none;
 	font-size: 16px;
 	cursor: pointer;
-	padding: 2px 6px;
+	padding: 2px 0;
 	line-height: 1;
 	filter: grayscale(0.3);
 	transition: filter 0.2s, transform 0.2s;
