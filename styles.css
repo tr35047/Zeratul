@@ -50,11 +50,6 @@ html, body {
 	overflow: hidden;
 }
 
-body {
-	display: flex;
-	flex-direction: column;
-}
-
 /* ---- 自定义滚动条 — SC2 风格 ---- */
 /* Firefox */
 * {
@@ -120,7 +115,7 @@ body {
 	color: var(--text);
 	line-height: 1.5;
 	-webkit-font-smoothing: antialiased;
-	background: #162f95 no-repeat url(https://i.imgs.ovh/2026/03/06/OZ1lT1.jpeg);
+	background: #162f95 no-repeat url(assets/bg-body.jpeg);
 	background-attachment: fixed;
 	background-position-x: center;
 	background-size: contain;
@@ -135,7 +130,7 @@ body {
 	border-radius: 15px 15px 0 0;
 	border: 3px #297dab ridge;
 	border-bottom: 0;
-	background: #040e2f url(https://i.imgs.ovh/2026/03/06/OZ14YY.jpeg) repeat 50% 0;
+	background: #040e2f url(assets/bg-panel.jpeg) repeat 50% 0;
 }
 
 /* ================================================
@@ -144,8 +139,8 @@ body {
 .app-header {
 	padding: var(--sp-lg) var(--sp-md);
 	text-align: center;
-	flex-shrink: 0;
 	position: fixed;
+	top: 0;
 	left: 0;
 	right: 0;
 	opacity: 1;
@@ -156,7 +151,7 @@ body {
 	height: 36px;
 	display: flex;
 	align-items: center;
-	background: #040e2f url(https://i.imgs.ovh/2026/03/06/OZ14YY.jpeg) repeat 50% 0;
+	background: #040e2f url(assets/bg-panel.jpeg) repeat 50% 0;
 	border-bottom: 3px #297dab ridge;
 }
 
@@ -251,9 +246,8 @@ body {
 	display: flex;
 	gap: 0;
 	padding: 0 var(--sp-md) var(--sp-xl);
-	flex: 1;
-	min-height: 0;
-	overflow: hidden;
+	height: calc(100vh - 60px);
+	overflow: auto;
 }
 
 /* ---- 左侧侧栏 ---- */
@@ -281,7 +275,7 @@ body {
 }
 
 .sidebar-frame {
-	border-image: url(https://i.imgs.ovh/2026/03/06/OZ1og0.webp) 40 fill repeat;
+	border-image: url(assets/border-frame.webp) 40 fill repeat;
 	border-image-width: 20px;
 	padding: 20px 16px 16px;
 	min-height: 160px;
@@ -706,10 +700,10 @@ input, select, button {
 }
 
 .modal-content {
-	/*background: #040e2f url(https://i.imgs.ovh/2026/03/06/OZ14YY.jpeg) repeat 50% 0;*/
+	/*background: #040e2f url(assets/bg-panel.jpeg) repeat 50% 0;*/
 	margin: 0 auto;
 	padding: 0;
-	border-image: url(https://i.imgs.ovh/2026/03/06/OZ1og0.webp) 40 fill repeat;
+	border-image: url(assets/border-frame.webp) 40 fill repeat;
 	border-image-width: 20px;
 	width: 90%;
 	max-width: 420px;
@@ -1621,6 +1615,7 @@ tbody tr:nth-child(even):hover {
 		overflow: auto;
 		max-width: 100%;
 		margin-top: 44px;
+		height: calc(100vh - 44px);
 	}
 
 	/* ---- 卡包选择：横向排列 ---- */
@@ -1818,6 +1813,7 @@ tbody tr:nth-child(even):hover {
 
 	.app-main {
 		margin-top: 30px;
+		height: calc(100vh - 30px);
 		border: none;
 		border-radius: 0;
 	}
