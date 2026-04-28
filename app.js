@@ -86,6 +86,7 @@
 			this.restoreSidebarState();
 			this.reloadCards();
 			this.initUpdateModal();
+			this.initBenefitModal();
 			window.addEventListener('resize', function () {
 				self.updateToggleIcon();
 			});
@@ -113,13 +114,19 @@
 				predictionStatus: document.getElementById('predictionStatus'),
 				predictionRecommendations: document.getElementById('predictionRecommendations'),
 				predictionLevelFilter: document.getElementById('predictionLevelFilter'),
-			sidebarToggle: document.getElementById('sidebarToggle'),
-			sidebar: document.querySelector('.sidebar'),
-			updateModal: document.getElementById('updateModal'),
-			updateNotifyBtn: document.getElementById('updateNotifyBtn'),
-			closeUpdateModal: document.getElementById('closeUpdateModal'),
-			dismissTodayBtn: document.getElementById('dismissTodayBtn'),
-			closeUpdateBtn: document.getElementById('closeUpdateBtn')
+				sidebarToggle: document.getElementById('sidebarToggle'),
+				sidebar: document.querySelector('.sidebar'),
+				updateModal: document.getElementById('updateModal'),
+				updateNotifyBtn: document.getElementById('updateNotifyBtn'),
+				closeUpdateModal: document.getElementById('closeUpdateModal'),
+				dismissTodayBtn: document.getElementById('dismissTodayBtn'),
+				closeUpdateBtn: document.getElementById('closeUpdateBtn'),
+				benefitModal: document.getElementById('benefitModal'),
+				benefitCopyBtns: document.querySelectorAll('#benefitModal .benefit-copy-btn'),
+				benefitNotifyBtn: document.getElementById('benefitNotifyBtn'),
+				closeBenefitModal: document.getElementById('closeBenefitModal'),
+				dismissBenefitTodayBtn: document.getElementById('dismissBenefitTodayBtn'),
+				closeBenefitBtn: document.getElementById('closeBenefitBtn')
 			};
 		},
 
@@ -174,12 +181,6 @@
 		initUpdateModal: function () {
 			var self = this;
 			var today = new Date().toISOString().slice(0, 10);
-			var dismissed = '';
-			try { dismissed = localStorage.getItem('zeratul_update_dismissed') || ''; } catch (e) {}
-
-			if (dismissed !== today) {
-				this.els.updateModal.style.display = 'block';
-			}
 
 			this.els.updateNotifyBtn.addEventListener('click', function () {
 				self.els.updateModal.style.display = 'block';
@@ -199,6 +200,81 @@
 					self.els.updateModal.style.display = 'none';
 				}
 			});
+		},
+
+		initBenefitModal: function () {
+			var self = this;
+			var today = new Date().toISOString().slice(0, 10);
+			var dismissed = '';
+			try { dismissed = localStorage.getItem('zeratul_benefit_dismissed') || ''; } catch (e) {}
+
+			if (dismissed !== today) {
+				this.els.benefitModal.style.display = 'block';
+			}
+
+			this.els.benefitNotifyBtn.addEventListener('click', function () {
+				self.els.benefitModal.style.display = 'block';
+			});
+			this.els.closeBenefitModal.addEventListener('click', function () {
+				self.els.benefitModal.style.display = 'none';
+			});
+			this.els.closeBenefitBtn.addEventListener('click', function () {
+				self.els.benefitModal.style.display = 'none';
+			});
+			this.els.dismissBenefitTodayBtn.addEventListener('click', function () {
+				try { localStorage.setItem('zeratul_benefit_dismissed', today); } catch (e) {}
+				self.els.benefitModal.style.display = 'none';
+			});
+			this.els.benefitCopyBtns.forEach(function (btn) {
+				btn.addEventListener('click', function () {
+					self.copyBenefitCode(btn);
+				});
+			});
+			window.addEventListener('click', function (e) {
+				if (e.target === self.els.benefitModal) {
+					self.els.benefitModal.style.display = 'none';
+				}
+			});
+		},
+
+		copyBenefitCode: function (btn) {
+			var self = this;
+			var text = btn.dataset.copy || '';
+			if (!text) return;
+
+			var onSuccess = function () {
+				var originalText = btn.textContent;
+				btn.textContent = '已复制';
+				btn.disabled = true;
+				setTimeout(function () {
+					btn.textContent = originalText;
+					btn.disabled = false;
+				}, 1200);
+			};
+
+			if (navigator.clipboard && window.isSecureContext) {
+				navigator.clipboard.writeText(text).then(onSuccess).catch(function () {
+					self.fallbackCopyText(text, onSuccess);
+				});
+				return;
+			}
+
+			this.fallbackCopyText(text, onSuccess);
+		},
+
+		fallbackCopyText: function (text, onSuccess) {
+			var input = document.createElement('textarea');
+			input.value = text;
+			input.setAttribute('readonly', '');
+			input.style.position = 'fixed';
+			input.style.opacity = '0';
+			document.body.appendChild(input);
+			input.select();
+			try {
+				document.execCommand('copy');
+				onSuccess();
+			} catch (e) {}
+			document.body.removeChild(input);
 		},
 
 		// --- Sidebar collapse ---

@@ -14,10 +14,11 @@
 	<img class="header-logo" src="https://i.imgs.ovh/2026/03/06/OZ1E3b.webp" alt="SC2">
 	<h1>Zeratul V3.0.0</h1>
 	<div class="header-links">
+		<button id="benefitNotifyBtn" class="update-notify-btn" type="button" title="福利">🎁</button>
+		<button id="updateNotifyBtn" class="update-notify-btn" type="button" title="查看更新日志">🔔</button>
 		<a href="https://blacklist-dj91g016x.maozi.io/" target="_blank" rel="noopener">酒馆共享黑名单</a>
 		<a href="https://www.bilibili.com/video/BV1aGDiBmEG9/?spm_id_from=333.1387.list.card_archive.click&vd_source=29f038e3578e669cc00917d7e424d08b" target="_blank" rel="noopener">工具说明</a>
 		<a href="https://b23.tv/l605vgB" target="_blank" rel="noopener">@阿冰ベ</a>
-		<button id="updateNotifyBtn" class="update-notify-btn" type="button" title="查看更新日志">🔔</button>
 	</div>
 </header>
 
@@ -174,6 +175,37 @@
 		<div class="modal-footer update-modal-footer">
 			<button id="dismissTodayBtn" class="secondary-btn">今日关闭</button>
 			<button id="closeUpdateBtn" class="primary-btn">关闭</button>
+		</div>
+	</div>
+</div>
+
+<div id="benefitModal" class="modal">
+	<div class="modal-content benefit-modal-content">
+		<div class="modal-header">
+			<h2>🎁 福利</h2>
+			<span class="close-btn" id="closeBenefitModal">&times;</span>
+		</div>
+		<div class="modal-body benefit-modal-body">
+			<p class="benefit-title">雷神加速器福利</p>
+			<p class="benefit-text">免费领取50小时加速时长</p>
+			<p class="benefit-label">兑换口令</p>
+			<div class="benefit-code-list">
+				<div class="benefit-code-row">
+					<strong class="benefit-code">AB1001</strong>
+					<button type="button" class="secondary-btn benefit-copy-btn" data-copy="AB1001">复制</button>
+				</div>
+				<div class="benefit-code-row">
+					<strong class="benefit-code">给我擦皮鞋</strong>
+					<button type="button" class="secondary-btn benefit-copy-btn" data-copy="给我擦皮鞋">复制</button>
+				</div>
+			</div>
+			<p class="benefit-label">兑换方法</p>
+			<p class="benefit-text">打开雷神加速器的 <span class="benefit-highlight">CDK/口令兑换</span></p>
+			<p class="benefit-text">或点击链接进行兑换 <a href="https://www.leigod.com/user/#page=3" target="_blank" rel="noopener">https://www.leigod.com/user/#page=3</a></p>
+		</div>
+		<div class="modal-footer">
+			<button id="dismissBenefitTodayBtn" class="secondary-btn">今日关闭</button>
+			<button id="closeBenefitBtn" class="primary-btn">关闭</button>
 		</div>
 	</div>
 </div>
