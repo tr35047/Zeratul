@@ -19,7 +19,7 @@
 		{key: 'core', name: '核心', file: 'resource/data/core.js'},
 		{key: 'pack1', name: '军备竞赛', file: 'resource/data/pack1.js'},
 		{key: 'pack2', name: '作战计划', file: 'resource/data/pack2.js'},
-		{key: 'pack3', name: '卷土重来', file: 'resource/data/pack3.js'},
+		// {key: 'pack3', name: '卷土重来', file: 'resource/data/pack3.js'},
 		{key: 'pack4', name: '时不我待', file: 'resource/data/pack4.js'},
 		{key: 'pack5', name: '重装上阵', file: 'resource/data/pack5.js'},
 		{key: 'pack6', name: '穷兵黩武', file: 'resource/data/pack6.js'},

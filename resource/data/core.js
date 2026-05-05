@@ -54,7 +54,7 @@ window._packData["core"] = {"name":"核心","cards":[
 {"id":"飙车流","race":"Terran","level":3,"number":7,"value":1500},
 {"id":"步兵连队","race":"Terran","level":3,"number":13,"value":1200},
 {"id":"地雷禁区","race":"Terran","level":3,"number":7,"value":100},
-{"id":"陆军学院","race":"Terran","level":4,"number":6,"value":1350},
+{"id":"陆军学院","race":"Terran","level":4,"number":6,"value":1300},
 {"id":"护航中队","race":"Terran","level":4,"number":4,"value":760},
 {"id":"步坦协同","race":"Terran","level":4,"number":11,"value":950},
 {"id":"交叉火力","race":"Terran","level":4,"number":6,"value":1150},
