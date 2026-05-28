@@ -29,9 +29,11 @@ window._packData["core"] = {"name":"核心","cards":[
 {"id":"难民营地","race":"Zerg","level":2,"number":11,"value":550},
 {"id":"孵化蟑螂","race":"Zerg","level":2,"number":6,"value":800},
 {"id":"凶残巨兽","race":"Zerg","level":3,"number":2,"value":1000},
-{"id":"飞龙骑脸","race":"Zerg","level":3,"number":20,"value":1125},
-{"id":"爆虫滚滚","race":"Zerg","level":3,"number":10,"value":650},
+// {"id":"飞龙骑脸","race":"Zerg","level":3,"number":20,"value":1125},
+// {"id":"爆虫滚滚","race":"Zerg","level":3,"number":10,"value":650},
+{"id":"爆虫滚滚","race":"Zerg","level":3,"number":25,"value":1625},
 {"id":"注卵虫后","race":"Zerg","level":3,"number":5,"value":875},
+{"id":"机械感染","race":"Zerg","level":3,"number":4,"value":800},
 {"id":"孵化所","race":"Zerg","level":4,"number":5,"value":850},
 {"id":"弱肉强食","race":"Zerg","level":4,"number":7,"value":1225},
 {"id":"遮天蔽日","race":"Zerg","level":4,"number":10,"value":1248},
@@ -88,5 +90,6 @@ window._packData["core"] = {"name":"核心","cards":[
 {"id":"德哈卡","race":"Neutral","level":5,"number":4,"value":1650},
 {"id":"凯瑞甘","race":"Neutral","level":6,"number":1,"value":50},
 {"id":"死亡舰队","race":"Neutral","level":6,"number":2,"value":1000},
-{"id":"虚空构造体","race":"Neutral","level":6,"number":1,"value":3000}
+{"id":"虚空构造体","race":"Neutral","level":6,"number":1,"value":3000},
+{"id":"死亡之握","race":"Neutral","level":6,"number":1,"value":1000}
 ]};

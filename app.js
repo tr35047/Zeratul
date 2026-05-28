@@ -17,7 +17,7 @@
 
 	var PACK_REGISTRY = [
 		{key: 'core', name: '核心', file: 'resource/data/core.js'},
-		{key: 'pack1', name: '军备竞赛', file: 'resource/data/pack1.js'},
+		// {key: 'pack1', name: '军备竞赛', file: 'resource/data/pack1.js'},
 		{key: 'pack2', name: '作战计划', file: 'resource/data/pack2.js'},
 		// {key: 'pack3', name: '卷土重来', file: 'resource/data/pack3.js'},
 		{key: 'pack4', name: '时不我待', file: 'resource/data/pack4.js'},
