@@ -181,6 +181,12 @@
 		initUpdateModal: function () {
 			var self = this;
 			var today = new Date().toISOString().slice(0, 10);
+			var dismissed = '';
+			try { dismissed = localStorage.getItem('zeratul_update_dismissed') || ''; } catch (e) {}
+
+			if (dismissed !== today) {
+				this.els.updateModal.style.display = 'block';
+			}
 
 			this.els.updateNotifyBtn.addEventListener('click', function () {
 				self.els.updateModal.style.display = 'block';
@@ -205,12 +211,6 @@
 		initBenefitModal: function () {
 			var self = this;
 			var today = new Date().toISOString().slice(0, 10);
-			var dismissed = '';
-			try { dismissed = localStorage.getItem('zeratul_benefit_dismissed') || ''; } catch (e) {}
-
-			if (dismissed !== today) {
-				this.els.benefitModal.style.display = 'block';
-			}
 
 			this.els.benefitNotifyBtn.addEventListener('click', function () {
 				self.els.benefitModal.style.display = 'block';
