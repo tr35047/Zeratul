@@ -1645,12 +1645,14 @@ tbody tr:nth-child(even):hover {
 }
 
 .update-item {
-	display: flex;
-	align-items: flex-start;
-	gap: var(--sp-sm);
+	display: block;
 	font-size: 14px;
 	color: var(--text);
 	line-height: 1.6;
+}
+
+.update-item > span {
+	display: block;
 }
 
 .update-tag {
@@ -1662,6 +1664,8 @@ tbody tr:nth-child(even):hover {
 	font-weight: 600;
 	letter-spacing: 0.3px;
 	margin-top: 2px;
+	margin-bottom: 4px;
+	width: fit-content;
 }
 
 .tag-new {
