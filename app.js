@@ -15,6 +15,28 @@
 		return RACE_CN[race] || race;
 	}
 
+	function escapeHtml(value) {
+		return String(value == null ? '' : value).replace(/[&<>"']/g, function (ch) {
+			return ({
+				'&': '&amp;',
+				'<': '&lt;',
+				'>': '&gt;',
+				'"': '&quot;',
+				"'": '&#39;'
+			})[ch];
+		});
+	}
+
+	var RACE_ORDER = ['Protess', 'Zerg', 'Terran', 'Neutral'];
+
+	function sortRaces(a, b) {
+		var ai = RACE_ORDER.indexOf(a);
+		var bi = RACE_ORDER.indexOf(b);
+		if (ai === -1) ai = RACE_ORDER.length;
+		if (bi === -1) bi = RACE_ORDER.length;
+		return ai - bi || String(a).localeCompare(String(b));
+	}
+
 	var PACK_REGISTRY = [
 		{key: 'core', name: '核心', file: 'resource/data/core.js'},
 		// {key: 'pack1', name: '军备竞赛', file: 'resource/data/pack1.js'},
@@ -1230,7 +1252,644 @@
 		}
 	};
 
+	var ViewRouter = {
+		init: function () {
+			this.cacheEls();
+			if (!this.els.mainApp || !this.els.simulatorApp) return;
+			this.bindEvents();
+			this.applyHash();
+		},
+
+		cacheEls: function () {
+			this.els = {
+				mainApp: document.getElementById('mainApp'),
+				simulatorApp: document.getElementById('simulatorApp'),
+				mainViewBtn: document.getElementById('mainViewBtn'),
+				simulatorViewBtn: document.getElementById('simulatorViewBtn')
+			};
+		},
+
+		bindEvents: function () {
+			var self = this;
+			this.els.mainViewBtn.addEventListener('click', function () {
+				if (window.location.hash) {
+					window.history.pushState('', document.title, window.location.pathname + window.location.search);
+				}
+				self.show('main');
+			});
+			this.els.simulatorViewBtn.addEventListener('click', function () {
+				if (window.location.hash !== '#simulator') {
+					window.location.hash = 'simulator';
+				} else {
+					self.show('simulator');
+				}
+			});
+			window.addEventListener('hashchange', function () {
+				self.applyHash();
+			});
+		},
+
+		applyHash: function () {
+			this.show(window.location.hash === '#simulator' ? 'simulator' : 'main');
+		},
+
+		show: function (view) {
+			var isSimulator = view === 'simulator';
+			this.els.mainApp.hidden = isSimulator;
+			this.els.simulatorApp.hidden = !isSimulator;
+			this.els.mainViewBtn.classList.toggle('selected', !isSimulator);
+			this.els.simulatorViewBtn.classList.toggle('selected', isSimulator);
+		}
+	};
+
+	var Simulator = {
+		state: {
+			cards: [],
+			coreCards: [],
+			enabledPacks: ['core'],
+			selectedRace: '',
+			selectedLevel: '',
+			selectedCardId: '',
+			prophecyCardId: '',
+			attempts: 0,
+			history: [],
+			solvedProphecies: [],
+			predictRace: 'all',
+			predictLevel: 'all',
+			predictCardId: ''
+		},
+
+		init: function () {
+			this.cacheEls();
+			if (!this.els.root) return;
+			this.bindEvents();
+			this.renderPackToggles();
+			this.reloadCards();
+		},
+
+		cacheEls: function () {
+			this.els = {
+				root: document.getElementById('simulatorApp'),
+				packToggles: document.getElementById('simPackToggles'),
+				prophecyState: document.getElementById('simProphecyState'),
+				attemptCount: document.getElementById('simAttemptCount'),
+				raceRow: document.getElementById('simRaceRow'),
+				levelRow: document.getElementById('simLevelRow'),
+				cardRow: document.getElementById('simCardRow'),
+				enterBtn: document.getElementById('simEnterBtn'),
+				restartBtn: document.getElementById('simRestartBtn'),
+				predictBtn: document.getElementById('simPredictBtn'),
+				historyStats: document.getElementById('simHistoryStats'),
+				historyList: document.getElementById('simHistoryList'),
+				solvedList: document.getElementById('simSolvedList'),
+				predictModal: document.getElementById('simPredictModal'),
+				closePredictModal: document.getElementById('closeSimPredictModal'),
+				cancelPredictBtn: document.getElementById('cancelSimPredictBtn'),
+				confirmPredictBtn: document.getElementById('confirmSimPredictBtn'),
+				predictRaceRow: document.getElementById('simPredictRaceRow'),
+				predictLevelRow: document.getElementById('simPredictLevelRow'),
+				predictCardGrid: document.getElementById('simPredictCardGrid'),
+				toast: document.getElementById('simulatorToast')
+			};
+		},
+
+		bindEvents: function () {
+			var self = this;
+			this.els.enterBtn.addEventListener('click', function () {
+				self.addEntry();
+			});
+			this.els.restartBtn.addEventListener('click', function () {
+				self.restartGame();
+			});
+			this.els.predictBtn.addEventListener('click', function () {
+				self.openPredictModal();
+			});
+			this.els.closePredictModal.addEventListener('click', function () {
+				self.hidePredictModal();
+			});
+			this.els.cancelPredictBtn.addEventListener('click', function () {
+				self.hidePredictModal();
+			});
+			this.els.confirmPredictBtn.addEventListener('click', function () {
+				self.confirmPrediction();
+			});
+			window.addEventListener('click', function (e) {
+				if (e.target === self.els.predictModal) {
+					self.hidePredictModal();
+				}
+			});
+		},
+
+		reloadCards: function () {
+			var self = this;
+			this.renderStatus();
+
+			var toLoad = PACK_REGISTRY.filter(function (entry) {
+				return self.state.enabledPacks.indexOf(entry.key) !== -1;
+			});
+
+			Promise.all(toLoad.map(function (entry) {
+				return loadPackScript(entry);
+			}))
+				.then(function (datasets) {
+					var cards = [];
+					datasets.forEach(function (data, index) {
+						var entry = toLoad[index];
+						var isCore = entry.key === 'core';
+						data.cards.forEach(function (c) {
+							cards.push({
+								id: c.id,
+								race: c.race,
+								level: Number(c.level),
+								number: Number(c.number),
+								value: Number(c.value),
+								packKey: entry.key,
+								packName: entry.name,
+								isCoreSet: isCore
+							});
+						});
+					});
+					self.state.cards = cards;
+					self.state.coreCards = cards.filter(function (c) {
+						return c.isCoreSet;
+					});
+					if (!self.getCoreCardById(self.state.prophecyCardId)) {
+						self.pickNewProphecy();
+					}
+					self.ensureEntrySelection();
+					self.renderAll();
+				})
+				.catch(function (err) {
+					self.renderAll();
+					self.showToast('加载失败');
+					console.error(err);
+				});
+		},
+
+		renderPackToggles: function () {
+			var self = this;
+			this.els.packToggles.innerHTML = PACK_REGISTRY.map(function (entry) {
+				var isCore = entry.key === 'core';
+				var checked = self.state.enabledPacks.indexOf(entry.key) !== -1;
+				return '<label>' +
+					'<input type="checkbox" data-sim-pack="' + entry.key + '"' +
+					(checked ? ' checked' : '') +
+					(isCore ? ' disabled' : '') +
+					'> ' + escapeHtml(entry.name) +
+					'</label>';
+			}).join('');
+
+			this.els.packToggles.querySelectorAll('input[type="checkbox"]').forEach(function (cb) {
+				cb.addEventListener('change', function () {
+					var key = cb.dataset.simPack;
+					if (cb.checked && self.state.enabledPacks.indexOf(key) === -1) {
+						self.state.enabledPacks.push(key);
+					}
+					if (!cb.checked) {
+						self.state.enabledPacks = self.state.enabledPacks.filter(function (k) {
+							return k !== key;
+						});
+					}
+					self.state.history = [];
+					self.state.solvedProphecies = [];
+					self.state.attempts = 0;
+					self.state.prophecyCardId = '';
+					self.state.selectedCardId = '';
+					self.reloadCards();
+				});
+			});
+		},
+
+		restartGame: function () {
+			this.state.history = [];
+			this.state.solvedProphecies = [];
+			this.state.attempts = 0;
+			this.state.prophecyCardId = '';
+			this.state.selectedCardId = '';
+			this.state.predictCardId = '';
+			this.pickNewProphecy();
+			this.ensureEntrySelection();
+			this.renderAll();
+		},
+
+		pickNewProphecy: function () {
+			var solved = {};
+			this.state.solvedProphecies.forEach(function (item) {
+				solved[item.cardId] = true;
+			});
+			var pool = this.state.coreCards.filter(function (card) {
+				return !solved[card.id];
+			});
+			if (pool.length === 0) {
+				this.state.prophecyCardId = '';
+				this.state.attempts = 0;
+				return;
+			}
+			var index = Math.floor(Math.random() * pool.length);
+			this.state.prophecyCardId = pool[index].id;
+			this.state.attempts = 0;
+		},
+
+		ensureEntrySelection: function () {
+			var cards = this.state.cards;
+			if (cards.length === 0) {
+				this.state.selectedRace = '';
+				this.state.selectedLevel = '';
+				this.state.selectedCardId = '';
+				return;
+			}
+
+			var races = this.getRaces(cards);
+			if (races.indexOf(this.state.selectedRace) === -1) {
+				this.state.selectedRace = races[0] || '';
+			}
+
+			var levelCards = cards.filter(function (c) {
+				return c.race === this.state.selectedRace;
+			}, this);
+			var levels = this.getLevels(levelCards);
+			if (levels.indexOf(Number(this.state.selectedLevel)) === -1) {
+				this.state.selectedLevel = levels.length > 0 ? String(levels[0]) : '';
+			}
+
+			var selectedExists = cards.some(function (c) {
+				return c.id === this.state.selectedCardId &&
+					c.race === this.state.selectedRace &&
+					String(c.level) === String(this.state.selectedLevel);
+			}, this);
+			if (!selectedExists) {
+				this.state.selectedCardId = '';
+			}
+		},
+
+		getRaces: function (cards) {
+			var set = {};
+			cards.forEach(function (card) {
+				if (card.race) set[card.race] = true;
+			});
+			return Object.keys(set).sort(sortRaces);
+		},
+
+		getLevels: function (cards) {
+			var set = {};
+			cards.forEach(function (card) {
+				set[card.level] = true;
+			});
+			return Object.keys(set).map(Number).sort(function (a, b) {
+				return a - b;
+			});
+		},
+
+		cardSort: function (a, b) {
+			return sortRaces(a.race, b.race) ||
+				a.level - b.level ||
+				a.number - b.number ||
+				a.value - b.value ||
+				a.id.localeCompare(b.id);
+		},
+
+		getCardById: function (cardId) {
+			for (var i = 0; i < this.state.cards.length; i++) {
+				if (this.state.cards[i].id === cardId) return this.state.cards[i];
+			}
+			return null;
+		},
+
+		getCoreCardById: function (cardId) {
+			for (var i = 0; i < this.state.coreCards.length; i++) {
+				if (this.state.coreCards[i].id === cardId) return this.state.coreCards[i];
+			}
+			return null;
+		},
+
+		matchesProphecy: function (card, prophecy) {
+			if (!card || !prophecy) return false;
+			return card.race === prophecy.race ||
+				card.number === prophecy.number ||
+				Math.abs(card.value - prophecy.value) < CLOSE_THRESHOLD;
+		},
+
+		calcKnifeCount: function (card) {
+			var self = this;
+			var total = 0;
+			var current = this.getCoreCardById(this.state.prophecyCardId);
+			if (this.matchesProphecy(card, current)) {
+				total += 1;
+			}
+			this.state.solvedProphecies.forEach(function (item) {
+				var prophecy = self.getCoreCardById(item.cardId);
+				if (self.matchesProphecy(card, prophecy)) {
+					total += 2;
+				}
+			});
+			return total;
+		},
+
+		addEntry: function () {
+			var card = this.getCardById(this.state.selectedCardId);
+			if (!card) return;
+			var knifeCount = this.calcKnifeCount(card);
+			this.state.history.push({
+				cardId: card.id,
+				knifeCount: knifeCount
+			});
+			this.renderAll();
+		},
+
+		openPredictModal: function () {
+			if (!this.state.prophecyCardId) {
+				this.showToast('已完成');
+				return;
+			}
+			this.state.predictRace = 'all';
+			this.state.predictLevel = 'all';
+			this.state.predictCardId = '';
+			this.els.predictModal.style.display = 'block';
+			this.renderPredictModal();
+		},
+
+		hidePredictModal: function () {
+			this.els.predictModal.style.display = 'none';
+		},
+
+		getPredictPool: function () {
+			var solved = {};
+			this.state.solvedProphecies.forEach(function (item) {
+				solved[item.cardId] = true;
+			});
+			return this.state.coreCards.filter(function (card) {
+				return !solved[card.id];
+			}).sort(this.cardSort);
+		},
+
+		renderPredictModal: function () {
+			var self = this;
+			var pool = this.getPredictPool();
+			var races = this.getRaces(pool);
+			var raceHtml = '<button type="button" class="race-btn' +
+				(this.state.predictRace === 'all' ? ' selected' : '') +
+				'" data-race="all">全部</button>';
+			raceHtml += races.map(function (race) {
+				return '<button type="button" class="race-btn' +
+					(self.state.predictRace === race ? ' selected' : '') +
+					'" data-race="' + escapeHtml(race) + '">' +
+					escapeHtml(raceName(race)) +
+					'</button>';
+			}).join('');
+			this.els.predictRaceRow.innerHTML = raceHtml;
+
+			var raceFiltered = pool.filter(function (card) {
+				return self.state.predictRace === 'all' || card.race === self.state.predictRace;
+			});
+			var levels = this.getLevels(raceFiltered);
+			if (this.state.predictLevel !== 'all' && levels.indexOf(Number(this.state.predictLevel)) === -1) {
+				this.state.predictLevel = 'all';
+			}
+			var levelHtml = '<button type="button" class="level-btn' +
+				(this.state.predictLevel === 'all' ? ' selected' : '') +
+				'" data-level="all">全部</button>';
+			levelHtml += levels.map(function (level) {
+				return '<button type="button" class="level-btn' +
+					(String(level) === String(self.state.predictLevel) ? ' selected' : '') +
+					'" data-level="' + level + '">' + level + '</button>';
+			}).join('');
+			this.els.predictLevelRow.innerHTML = levelHtml;
+
+			var cards = raceFiltered.filter(function (card) {
+				return self.state.predictLevel === 'all' || String(card.level) === String(self.state.predictLevel);
+			}).sort(this.cardSort);
+			var selectedInList = cards.some(function (card) {
+				return card.id === self.state.predictCardId;
+			});
+			if (!selectedInList) {
+				this.state.predictCardId = '';
+			}
+
+			if (cards.length === 0) {
+				this.els.predictCardGrid.innerHTML = '<div class="simulator-empty">暂无卡牌</div>';
+			} else {
+				this.els.predictCardGrid.innerHTML = cards.map(function (card) {
+					return '<button type="button" class="simulator-predict-card' +
+						(card.id === self.state.predictCardId ? ' selected' : '') +
+						'" data-cardid="' + escapeHtml(card.id) + '">' +
+						'<span>' + escapeHtml(card.id) + '</span>' +
+						'<small>' + escapeHtml(raceName(card.race)) + ' Lv' + card.level + '</small>' +
+						'</button>';
+				}).join('');
+			}
+			this.els.confirmPredictBtn.disabled = !this.state.predictCardId;
+
+			this.els.predictRaceRow.querySelectorAll('button[data-race]').forEach(function (btn) {
+				btn.addEventListener('click', function () {
+					self.state.predictRace = btn.dataset.race;
+					self.state.predictCardId = '';
+					self.renderPredictModal();
+				});
+			});
+			this.els.predictLevelRow.querySelectorAll('button[data-level]').forEach(function (btn) {
+				btn.addEventListener('click', function () {
+					self.state.predictLevel = btn.dataset.level;
+					self.state.predictCardId = '';
+					self.renderPredictModal();
+				});
+			});
+			this.els.predictCardGrid.querySelectorAll('button[data-cardid]').forEach(function (btn) {
+				btn.addEventListener('click', function () {
+					self.state.predictCardId = btn.dataset.cardid;
+					self.renderPredictModal();
+				});
+			});
+		},
+
+		confirmPrediction: function () {
+			var guessed = this.getCoreCardById(this.state.predictCardId);
+			var current = this.getCoreCardById(this.state.prophecyCardId);
+			if (!guessed || !current) return;
+
+			this.state.attempts += 1;
+			this.hidePredictModal();
+
+			if (guessed.id === current.id) {
+				var message = '预言成功！ 预言牌：' + current.id;
+				this.state.solvedProphecies.push({
+					cardId: current.id,
+					attempts: this.state.attempts
+				});
+				this.state.history = [];
+				this.state.selectedCardId = '';
+				this.state.predictCardId = '';
+				this.launchFireworks();
+				this.pickNewProphecy();
+				this.ensureEntrySelection();
+				this.renderAll();
+				this.showToast(message, true);
+				return;
+			}
+
+			this.state.predictCardId = '';
+			this.renderAll();
+			this.showToast('很遗憾，你猜错了...');
+		},
+
+		renderAll: function () {
+			this.ensureEntrySelection();
+			this.renderStatus();
+			this.renderEntrySelectors();
+			this.renderHistory();
+			this.renderSolved();
+		},
+
+		renderStatus: function () {
+			if (!this.els.prophecyState) return;
+			var prophecyText = this.state.prophecyCardId ? '已生成' : '已完成';
+			if (this.state.coreCards.length === 0) {
+				prophecyText = '加载中';
+			}
+			this.els.prophecyState.textContent = prophecyText;
+			this.els.attemptCount.textContent = this.state.attempts + ' 次';
+			this.els.predictBtn.disabled = !this.state.prophecyCardId;
+		},
+
+		renderEntrySelectors: function () {
+			var self = this;
+			var races = this.getRaces(this.state.cards);
+			this.els.raceRow.innerHTML = races.map(function (race) {
+				return '<button type="button" class="race-btn' +
+					(race === self.state.selectedRace ? ' selected' : '') +
+					'" data-race="' + escapeHtml(race) + '">' +
+					escapeHtml(raceName(race)) +
+					'</button>';
+			}).join('');
+			this.els.raceRow.querySelectorAll('button[data-race]').forEach(function (btn) {
+				btn.addEventListener('click', function () {
+					self.state.selectedRace = btn.dataset.race;
+					self.state.selectedLevel = '';
+					self.state.selectedCardId = '';
+					self.ensureEntrySelection();
+					self.renderEntrySelectors();
+				});
+			});
+
+			var raceCards = this.state.cards.filter(function (card) {
+				return card.race === self.state.selectedRace;
+			});
+			var levels = this.getLevels(raceCards);
+			this.els.levelRow.innerHTML = levels.map(function (level) {
+				return '<button type="button" class="level-btn' +
+					(String(level) === String(self.state.selectedLevel) ? ' selected' : '') +
+					'" data-level="' + level + '">' + level + '</button>';
+			}).join('');
+			this.els.levelRow.querySelectorAll('button[data-level]').forEach(function (btn) {
+				btn.addEventListener('click', function () {
+					self.state.selectedLevel = btn.dataset.level;
+					self.state.selectedCardId = '';
+					self.renderEntrySelectors();
+				});
+			});
+
+			var cards = raceCards.filter(function (card) {
+				return String(card.level) === String(self.state.selectedLevel);
+			}).sort(this.cardSort);
+			this.els.cardRow.innerHTML = cards.map(function (card) {
+				return '<button type="button" class="card-btn' +
+					(card.id === self.state.selectedCardId ? ' selected' : '') +
+					'" data-cardid="' + escapeHtml(card.id) + '">' +
+					escapeHtml(card.id) +
+					'</button>';
+			}).join('');
+			this.els.cardRow.querySelectorAll('button[data-cardid]').forEach(function (btn) {
+				btn.addEventListener('click', function () {
+					self.state.selectedCardId = btn.dataset.cardid;
+					self.renderEntrySelectors();
+				});
+			});
+			this.els.enterBtn.disabled = !this.state.selectedCardId;
+		},
+
+		renderHistory: function () {
+			var self = this;
+			this.els.historyStats.textContent = this.state.history.length + ' 条';
+			if (this.state.history.length === 0) {
+				this.els.historyList.innerHTML = '<div class="simulator-empty">暂无记录</div>';
+				return;
+			}
+			this.els.historyList.innerHTML = this.state.history.map(function (item, index) {
+				var card = self.getCardById(item.cardId);
+				if (!card) return '';
+				return '<article class="simulator-history-card">' +
+					'<div class="simulator-history-card-head">' +
+					'<span class="simulator-history-index">#' + (index + 1) + '</span>' +
+					'<strong>' + escapeHtml(card.id) + '</strong>' +
+					'<span class="simulator-history-knife">隐刀x' + item.knifeCount + '</span>' +
+					'</div>' +
+					'<div class="simulator-history-meta">' +
+					'<span><small>种族</small>' + escapeHtml(raceName(card.race)) + '</span>' +
+					'<span><small>等级</small>Lv' + card.level + '</span>' +
+					'<span><small>单位</small>' + card.number + '</span>' +
+					'<span><small>价值</small>' + card.value + '</span>' +
+					'</div>' +
+					'</article>';
+			}).join('');
+		},
+
+		renderSolved: function () {
+			var self = this;
+			if (this.state.solvedProphecies.length === 0) {
+				this.els.solvedList.innerHTML = '<div class="simulator-empty">暂无记录</div>';
+				return;
+			}
+			this.els.solvedList.innerHTML = this.state.solvedProphecies.map(function (item) {
+				var card = self.getCoreCardById(item.cardId);
+				if (!card) return '';
+				return '<div class="simulator-solved-item">' +
+					'<strong>' + escapeHtml(card.id) + '</strong>' +
+					'<span>' + item.attempts + ' 次</span>' +
+					'<small>' + escapeHtml(raceName(card.race)) + ' Lv' + card.level + '</small>' +
+					'</div>';
+			}).join('');
+		},
+
+		showToast: function (message, success) {
+			var el = this.els.toast;
+			if (!el) return;
+			window.clearTimeout(this.toastTimer);
+			el.textContent = message;
+			el.classList.toggle('success', !!success);
+			el.classList.add('show');
+			this.toastTimer = window.setTimeout(function () {
+				el.classList.remove('show');
+			}, 2200);
+		},
+
+		launchFireworks: function () {
+			var colors = ['#00e5ff', '#f0d060', '#b47aff', '#e8f0fe'];
+			var layer = document.createElement('div');
+			layer.className = 'fireworks-layer';
+			for (var i = 0; i < 42; i++) {
+				var spark = document.createElement('span');
+				spark.className = 'firework-spark';
+				var angle = Math.random() * Math.PI * 2;
+				var distance = 80 + Math.random() * 220;
+				spark.style.setProperty('--x', Math.cos(angle) * distance + 'px');
+				spark.style.setProperty('--y', Math.sin(angle) * distance + 'px');
+				spark.style.setProperty('--c', colors[i % colors.length]);
+				spark.style.left = (35 + Math.random() * 30) + '%';
+				spark.style.top = (30 + Math.random() * 30) + '%';
+				spark.style.animationDelay = (Math.random() * 160) + 'ms';
+				layer.appendChild(spark);
+			}
+			document.body.appendChild(layer);
+			window.setTimeout(function () {
+				if (layer.parentNode) {
+					layer.parentNode.removeChild(layer);
+				}
+			}, 1200);
+		}
+	};
+
 	document.addEventListener('DOMContentLoaded', function () {
 		App.init();
+		Simulator.init();
+		ViewRouter.init();
 	});
 })();

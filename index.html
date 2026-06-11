@@ -12,7 +12,11 @@
 <body>
 <header class="app-header">
 	<!-- <img class="header-logo" src="https://i.imgs.ovh/2026/03/06/OZ1E3b.webp" alt="SC2"> -->
-	<h1>Zeratul V3.0.1</h1>
+	<h1>Zeratul V3.0.2</h1>
+	<nav class="header-nav" aria-label="页面">
+		<button id="mainViewBtn" class="header-nav-btn selected" type="button">猜牌</button>
+		<button id="simulatorViewBtn" class="header-nav-btn" type="button">模拟器</button>
+	</nav>
 	<div class="header-links">
 		<button id="benefitNotifyBtn" class="update-notify-btn" type="button" title="福利">🎁</button>
 		<button id="updateNotifyBtn" class="update-notify-btn" type="button" title="查看更新日志">🔔</button>
@@ -22,7 +26,7 @@
 	</div>
 </header>
 
-<main class="app-main">
+<main id="mainApp" class="app-main">
 	<aside class="sidebar">
 		<div class="sidebar-frame">
 			<h2>卡包选择<span id="datasetInfo" class="muted"></span></h2>
@@ -116,6 +120,62 @@
 	</aside>
 </main>
 
+<main id="simulatorApp" class="simulator-app" hidden>
+	<aside class="simulator-sidebar">
+		<section class="panel simulator-pack-panel">
+			<h2>拓展包</h2>
+			<div class="dataset-controls simulator-pack-controls" id="simPackToggles"></div>
+		</section>
+	</aside>
+
+	<div class="simulator-content">
+		<section class="panel simulator-status-panel">
+			<div class="panel-header">
+				<h2>模拟器</h2>
+				<div class="simulator-actions">
+					<button id="simPredictBtn" class="primary-btn" type="button">预测</button>
+					<button id="simRestartBtn" class="danger" type="button">重新开始</button>
+				</div>
+			</div>
+			<div class="simulator-stats">
+				<div class="simulator-stat">
+					<span>预言</span>
+					<strong id="simProphecyState">待生成</strong>
+				</div>
+				<div class="simulator-stat">
+					<span>本轮</span>
+					<strong id="simAttemptCount">0 次</strong>
+				</div>
+			</div>
+		</section>
+
+		<section class="panel simulator-enter-panel">
+			<h2>卡牌进场</h2>
+			<div class="guess-controls">
+				<div class="filters-row" id="simRaceRow"></div>
+				<div class="filters-row" id="simLevelRow"></div>
+				<div class="card-row simulator-card-row" id="simCardRow"></div>
+				<button id="simEnterBtn" type="button" disabled>进场</button>
+			</div>
+		</section>
+
+		<section class="panel simulator-history-panel" style="padding-bottom: 0;">
+			<div class="panel-header">
+				<h2>进场记录</h2>
+				<span id="simHistoryStats" class="muted">0 条</span>
+			</div>
+			<div id="simHistoryList" class="simulator-history-list"></div>
+		</section>
+	</div>
+
+	<aside class="simulator-side">
+		<section class="panel simulator-solved-panel">
+			<h2>已猜中</h2>
+			<div id="simSolvedList" class="simulator-solved-list"></div>
+		</section>
+	</aside>
+</main>
+
 <div id="prophecyModal" class="modal">
 	<div class="modal-content">
 		<div class="modal-header">
@@ -137,7 +197,7 @@
 <div id="updateModal" class="modal">
 	<div class="modal-content update-modal-content">
 		<div class="modal-header">
-			<h2>V3.0.1 更新日志</h2>
+			<h2>V3.0.2 更新日志</h2>
 			<span class="close-btn" id="closeUpdateModal">&times;</span>
 		</div>
 		<div class="modal-body update-modal-body">
@@ -147,32 +207,15 @@
 					<span class="info-tips">https://zeratul-fizkx016x.maozi.io/</span>
 				</div>
 				<div class="update-item">
-					<span class="update-tag tag-new">核心包卡牌调整</span>
-					<span class="info-tips">移除飞龙骑脸</span>
-					<span class="info-tips">爆虫滚滚：卡牌价值 650 -> 1625, 单位数量 10 -> 25</span>
-					<span class="info-tips">机械感染移入核心包</span>
-					<span class="info-tips">死亡之握移入核心包</span>
+					<span class="update-tag tag-new">新增玩法</span>
+					<span class="info-tips">增加【预言模拟器】功能</span>
+					<span class="info-tips">模拟器内不提供记牌器功能</span>
+					<span class="info-tips">请开始脑力劳动【doge】</span>
 				</div>
 				<div class="update-item">
-					<span class="update-tag tag-new">删除</span>
-					<span class="info-tips">移除军备竞赛包</span>
+					<span class="update-tag tag-new">更新预告</span>
+					<span class="info-tips">增加【时代服】卡牌包内容兼容</span>
 				</div>
-				<!-- <div class="update-item">
-					<span class="update-tag tag-new">新增</span>
-					<span class="info-tips">候选预言牌支持手动排除与恢复全部排除</span>
-				</div>
-				<div class="update-item">
-					<span class="update-tag tag-improve">优化</span>
-					<span class="info-tips">推荐进场牌展示改为双列网格布局，最多显示10张</span>
-				</div>
-				<div class="update-item">
-					<span class="update-tag tag-improve">优化</span>
-					<span class="info-tips">过滤信息增益为0的推荐牌，提升推荐质量</span>
-				</div>
-				<div class="update-item">
-					<span class="update-tag tag-improve">优化</span>
-					<span class="info-tips">清除记录和确认预言时同步清空排除列表</span>
-				</div> -->
 			</div>
 		</div>
 		<div class="modal-footer update-modal-footer">
@@ -212,6 +255,32 @@
 		</div>
 	</div>
 </div>
+
+<div id="simPredictModal" class="modal">
+	<div class="modal-content simulator-modal-content">
+		<div class="modal-header">
+			<h2>预测</h2>
+			<span class="close-btn" id="closeSimPredictModal">&times;</span>
+		</div>
+		<div class="modal-body simulator-modal-body">
+			<div class="simulator-modal-filter">
+				<span>种族</span>
+				<div class="filters-row" id="simPredictRaceRow"></div>
+			</div>
+			<div class="simulator-modal-filter">
+				<span>等级</span>
+				<div class="filters-row" id="simPredictLevelRow"></div>
+			</div>
+			<div id="simPredictCardGrid" class="simulator-predict-card-grid"></div>
+		</div>
+		<div class="modal-footer">
+			<button id="cancelSimPredictBtn" class="secondary-btn" type="button">取消</button>
+			<button id="confirmSimPredictBtn" class="primary-btn" type="button" disabled>确认</button>
+		</div>
+	</div>
+</div>
+
+<div id="simulatorToast" class="simulator-toast" role="status" aria-live="polite"></div>
 
 <script src="app.js"></script>
 </body>
