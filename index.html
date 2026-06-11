@@ -29,7 +29,10 @@
 <main id="mainApp" class="app-main">
 	<aside class="sidebar">
 		<div class="sidebar-frame">
-			<h2>卡包选择<span id="datasetInfo" class="muted"></span></h2>
+			<div class="server-mode-toggle" id="serverModeToggle" role="group" aria-label="服务器">
+				<button type="button" data-server-mode="official">正式服</button>
+				<button type="button" data-server-mode="sdf">时代服</button>
+			</div>
 			<div class="dataset-controls" id="packToggles"></div>
 		</div>
 	</aside>
@@ -123,7 +126,6 @@
 <main id="simulatorApp" class="simulator-app" hidden>
 	<aside class="simulator-sidebar">
 		<section class="panel simulator-pack-panel">
-			<h2>拓展包</h2>
 			<div class="dataset-controls simulator-pack-controls" id="simPackToggles"></div>
 		</section>
 	</aside>

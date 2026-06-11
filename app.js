@@ -51,6 +51,24 @@
 		{key: 'packDuo1', name: '同卵双狗', file: 'resource/data/packDuo1.js'}
 	];
 
+	var SDF_PACK_REGISTRY = [
+		{key: 'core_sdf', name: '核心', file: 'resource/sdf/core_sdf.js'},
+		{key: 'pack1_sdf', name: '军备竞赛', file: 'resource/sdf/pack1_sdf.js'},
+		{key: 'pack2_sdf', name: '作战计划', file: 'resource/sdf/pack2_sdf.js'},
+		{key: 'pack3_sdf', name: '重装上阵', file: 'resource/sdf/pack3_sdf.js'},
+		{key: 'pack4_sdf', name: '穷兵黩武', file: 'resource/sdf/pack4_sdf.js'},
+		{key: 'pack5_sdf', name: '一念之差', file: 'resource/sdf/pack5_sdf.js'},
+		{key: 'pack6_sdf', name: '身经百战', file: 'resource/sdf/pack6_sdf.js'},
+		{key: 'pack7_sdf', name: '暗影渐生', file: 'resource/sdf/pack7_sdf.js'},
+		{key: 'pack8_sdf', name: '拉克希尔', file: 'resource/sdf/pack8_sdf.js'},
+		{key: 'pack9_sdf', name: '历久弥新', file: 'resource/sdf/pack9_sdf.js'}
+	];
+
+	var APP_PACK_MODES = {
+		official: {coreKey: 'core', packs: PACK_REGISTRY},
+		sdf: {coreKey: 'core_sdf', packs: SDF_PACK_REGISTRY}
+	};
+
 	// Track which scripts have been injected
 	var loadedScripts = {};
 
@@ -93,6 +111,7 @@
 			selectedRace: 'Neutral',
 			selectedLevel: '1',
 			selectedCardId: '',
+			serverMode: 'official',
 			enabledPacks: ['core'],
 			predictionLevels: [],
 			sidebarCollapsed: false,
@@ -104,6 +123,7 @@
 			this.cacheEls();
 			this.restoreState();
 			this.bindEvents();
+			this.renderServerModeToggle();
 			this.renderPackToggles();
 			this.restoreSidebarState();
 			this.reloadCards();
@@ -116,6 +136,7 @@
 
 		cacheEls: function () {
 			this.els = {
+				serverModeToggle: document.getElementById('serverModeToggle'),
 				packToggles: document.getElementById('packToggles'),
 				datasetInfo: document.getElementById('datasetInfo'),
 				raceRow: document.getElementById('raceRow'),
@@ -177,6 +198,11 @@
 				self.state.sortBy = e.target.value;
 				self.persist();
 				self.renderCandidates();
+			});
+			this.els.serverModeToggle.querySelectorAll('button[data-server-mode]').forEach(function (btn) {
+				btn.addEventListener('click', function () {
+					self.switchServerMode(btn.dataset.serverMode);
+				});
 			});
 
 			this.els.sidebarToggle.addEventListener('click', function () {
@@ -335,13 +361,72 @@
 			} catch (e) {}
 		},
 
+		getPackMode: function () {
+			return APP_PACK_MODES[this.state.serverMode] ? this.state.serverMode : 'official';
+		},
+
+		getPackModeConfig: function () {
+			return APP_PACK_MODES[this.getPackMode()];
+		},
+
+		getPackRegistry: function () {
+			return this.getPackModeConfig().packs;
+		},
+
+		getCorePackKey: function () {
+			return this.getPackModeConfig().coreKey;
+		},
+
+		normalizeEnabledPacks: function () {
+			var registry = this.getPackRegistry();
+			var coreKey = this.getCorePackKey();
+			var available = {};
+			var used = {};
+			registry.forEach(function (entry) {
+				available[entry.key] = true;
+			});
+			this.state.enabledPacks = this.state.enabledPacks.filter(function (key) {
+				if (!available[key] || used[key]) return false;
+				used[key] = true;
+				return true;
+			});
+			if (this.state.enabledPacks.indexOf(coreKey) === -1) {
+				this.state.enabledPacks.unshift(coreKey);
+			}
+		},
+
+		switchServerMode: function (mode) {
+			if (!APP_PACK_MODES[mode] || this.getPackMode() === mode) return;
+			this.state.serverMode = mode;
+			this.state.enabledPacks = [this.getCorePackKey()];
+			this.state.guesses = [];
+			this.state.excludedCardIds = [];
+			this.state.predictionLevels = [];
+			this.state.selectedRace = '';
+			this.state.selectedLevel = '';
+			this.state.selectedCardId = '';
+			this.els.addGuessBtn.disabled = true;
+			this.persist();
+			this.renderServerModeToggle();
+			this.renderPackToggles();
+			this.reloadCards();
+		},
+
+		renderServerModeToggle: function () {
+			var mode = this.getPackMode();
+			this.els.serverModeToggle.querySelectorAll('button[data-server-mode]').forEach(function (btn) {
+				btn.classList.toggle('selected', btn.dataset.serverMode === mode);
+			});
+		},
+
 		// --- Async data loading via dynamic <script> ---
 
 		reloadCards: function () {
 			var self = this;
-			this.els.datasetInfo.textContent = '加载中...';
+			this.normalizeEnabledPacks();
+			this.setDatasetInfo('加载中...');
 
-			var toLoad = PACK_REGISTRY.filter(function (e) {
+			var toLoad = this.getPackRegistry().filter(function (e) {
 				return self.state.enabledPacks.indexOf(e.key) !== -1;
 			});
 
@@ -360,28 +445,33 @@
 						});
 					});
 					self.state.cards = cards;
-					var names = datasets.map(function (d) {
-						return d.name;
-					}).join(', ');
-					// self.els.datasetInfo.textContent = ' ' + cards.length;
-					self.els.datasetInfo.textContent = '';
+					self.setDatasetInfo('');
 					self.renderAll();
 				})
 				.catch(function (err) {
-					self.els.datasetInfo.textContent = '加载失败';
+					self.setDatasetInfo('加载失败');
 					console.error(err);
 				});
+		},
+
+		setDatasetInfo: function (text) {
+			if (this.els.datasetInfo) {
+				this.els.datasetInfo.textContent = text;
+			}
 		},
 
 		// --- Pack toggles ---
 
 		renderPackToggles: function () {
 			var self = this;
-			var html = PACK_REGISTRY.map(function (entry) {
-				var isCore = entry.key === 'core';
+			this.normalizeEnabledPacks();
+			var registry = this.getPackRegistry();
+			var coreKey = this.getCorePackKey();
+			var html = registry.map(function (entry) {
+				var isCore = entry.key === coreKey;
 				var isEnabled = self.state.enabledPacks.indexOf(entry.key) !== -1;
 				var nonCoreCount = self.state.enabledPacks.filter(function (k) {
-					return k !== 'core';
+					return k !== coreKey;
 				}).length;
 				var isDisabled = !isCore && !isEnabled && nonCoreCount >= MAX_EXPANSION_PACKS;
 				return '<label class="' + (isDisabled ? 'disabled' : '') + '">' +
@@ -389,7 +479,7 @@
 					(isEnabled ? ' checked' : '') +
 					(isCore || isDisabled ? ' disabled' : '') +
 					' data-pack="' + entry.key + '"> ' +
-					entry.name + '</label>';
+					escapeHtml(entry.name) + '</label>';
 			}).join('');
 			this.els.packToggles.innerHTML = html;
 
@@ -1029,9 +1119,18 @@
 			}).sort(function (a, b) {
 				return a.number - b.number || a.value - b.value;
 			});
+			var hasSelectedCard = cards.some(function (c) {
+				return c.id === self.state.selectedCardId;
+			});
+			if (!hasSelectedCard) {
+				this.state.selectedCardId = '';
+			}
 
 			var usedCardIds = {};
 			this.state.guesses.forEach(function (g) { usedCardIds[g.cardId] = true; });
+			if (usedCardIds[this.state.selectedCardId]) {
+				this.state.selectedCardId = '';
+			}
 
 			this.els.cardRow.innerHTML = cards.map(function (c) {
 				var used = usedCardIds[c.id];
@@ -1048,6 +1147,7 @@
 					btn.classList.add('selected');
 				};
 			});
+			this.els.addGuessBtn.disabled = !this.state.selectedCardId;
 		},
 
 		renderHistory: function () {

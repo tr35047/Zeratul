@@ -276,6 +276,39 @@ body {
 	text-align: center;
 }
 
+.server-mode-toggle {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 2px;
+	/* margin-bottom: var(--sp-sm); */
+	padding: 2px;
+	border: 1px solid var(--border);
+	border-radius: var(--radius);
+	background: rgba(6, 25, 38, 0.68);
+}
+
+.server-mode-toggle button {
+	min-height: 28px;
+	padding: 4px 6px;
+	border: 0;
+	border-radius: calc(var(--radius) - 2px);
+	background: transparent;
+	color: var(--muted);
+	font-size: 13px;
+	cursor: pointer;
+}
+
+.server-mode-toggle button:hover {
+	color: var(--text);
+	background: rgba(0, 188, 212, 0.08);
+}
+
+.server-mode-toggle button.selected {
+	color: var(--text);
+	background: rgba(0, 188, 212, 0.22);
+	box-shadow: inset 0 0 0 1px rgba(0, 188, 212, 0.28);
+}
+
 /* ================================================
    Main Layout — 三栏布局
    ================================================ */
@@ -2383,6 +2416,7 @@ tbody tr:nth-child(even):hover {
 		flex-wrap: wrap;
 		align-items: center;
 		gap: 2px var(--sp-sm);
+		justify-content: start;
 	}
 
 	.simulator-pack-controls label {
