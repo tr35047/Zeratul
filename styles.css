@@ -1630,6 +1630,11 @@ tbody tr:nth-child(even):hover {
 	min-height: 160px;
 }
 
+.simulator-pack-panel .server-mode-toggle {
+	/* width: 100%; */
+	/* margin-bottom: var(--sp-xs); */
+}
+
 .simulator-pack-controls {
 	flex-direction: column;
 	align-items: flex-start;

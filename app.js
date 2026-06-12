@@ -3,6 +3,7 @@
 
 	var CLOSE_THRESHOLD = 200;
 	var MAX_EXPANSION_PACKS = 100;
+	var ASSET_VERSION = '20260612';
 
 	var RACE_CN = {
 		'Protess': '星灵',
@@ -25,6 +26,10 @@
 				"'": '&#39;'
 			})[ch];
 		});
+	}
+
+	function versionedAsset(file) {
+		return file + (file.indexOf('?') === -1 ? '?' : '&') + 'v=' + ASSET_VERSION;
 	}
 
 	var RACE_ORDER = ['Protess', 'Zerg', 'Terran', 'Neutral'];
@@ -92,7 +97,7 @@
 			}
 			loadedScripts[entry.key] = true;
 			var script = document.createElement('script');
-			script.src = entry.file;
+			script.src = versionedAsset(entry.file);
 			script.onload = function () {
 				resolve(window._packData[entry.key]);
 			};
@@ -1406,6 +1411,7 @@
 		state: {
 			cards: [],
 			coreCards: [],
+			serverMode: 'official',
 			enabledPacks: ['core'],
 			selectedRace: '',
 			selectedLevel: '',
@@ -1418,11 +1424,13 @@
 			predictLevel: 'all',
 			predictCardId: ''
 		},
+		loadToken: 0,
 
 		init: function () {
 			this.cacheEls();
 			if (!this.els.root) return;
 			this.bindEvents();
+			this.renderServerModeToggle();
 			this.renderPackToggles();
 			this.reloadCards();
 		},
@@ -1430,6 +1438,7 @@
 		cacheEls: function () {
 			this.els = {
 				root: document.getElementById('simulatorApp'),
+				serverModeToggle: document.getElementById('simServerModeToggle'),
 				packToggles: document.getElementById('simPackToggles'),
 				prophecyState: document.getElementById('simProphecyState'),
 				attemptCount: document.getElementById('simAttemptCount'),
@@ -1464,6 +1473,11 @@
 			this.els.predictBtn.addEventListener('click', function () {
 				self.openPredictModal();
 			});
+			this.els.serverModeToggle.querySelectorAll('button[data-sim-server-mode]').forEach(function (btn) {
+				btn.addEventListener('click', function () {
+					self.switchServerMode(btn.dataset.simServerMode);
+				});
+			});
 			this.els.closePredictModal.addEventListener('click', function () {
 				self.hidePredictModal();
 			});
@@ -1480,11 +1494,81 @@
 			});
 		},
 
+		getPackMode: function () {
+			return APP_PACK_MODES[this.state.serverMode] ? this.state.serverMode : 'official';
+		},
+
+		getPackModeConfig: function () {
+			return APP_PACK_MODES[this.getPackMode()];
+		},
+
+		getPackRegistry: function () {
+			return this.getPackModeConfig().packs;
+		},
+
+		getCorePackKey: function () {
+			return this.getPackModeConfig().coreKey;
+		},
+
+		normalizeEnabledPacks: function () {
+			var registry = this.getPackRegistry();
+			var coreKey = this.getCorePackKey();
+			var available = {};
+			var used = {};
+			registry.forEach(function (entry) {
+				available[entry.key] = true;
+			});
+			this.state.enabledPacks = this.state.enabledPacks.filter(function (key) {
+				if (!available[key] || used[key]) return false;
+				used[key] = true;
+				return true;
+			});
+			if (this.state.enabledPacks.indexOf(coreKey) === -1) {
+				this.state.enabledPacks.unshift(coreKey);
+			}
+		},
+
+		resetSession: function () {
+			this.state.history = [];
+			this.state.solvedProphecies = [];
+			this.state.attempts = 0;
+			this.state.prophecyCardId = '';
+			this.state.selectedRace = '';
+			this.state.selectedLevel = '';
+			this.state.selectedCardId = '';
+			this.state.predictRace = 'all';
+			this.state.predictLevel = 'all';
+			this.state.predictCardId = '';
+		},
+
+		switchServerMode: function (mode) {
+			if (!APP_PACK_MODES[mode] || this.getPackMode() === mode) return;
+			this.state.serverMode = mode;
+			this.state.enabledPacks = [this.getCorePackKey()];
+			this.state.cards = [];
+			this.state.coreCards = [];
+			this.resetSession();
+			this.hidePredictModal();
+			this.renderServerModeToggle();
+			this.renderPackToggles();
+			this.reloadCards();
+		},
+
+		renderServerModeToggle: function () {
+			var mode = this.getPackMode();
+			this.els.serverModeToggle.querySelectorAll('button[data-sim-server-mode]').forEach(function (btn) {
+				btn.classList.toggle('selected', btn.dataset.simServerMode === mode);
+			});
+		},
+
 		reloadCards: function () {
 			var self = this;
+			var token = ++this.loadToken;
+			this.normalizeEnabledPacks();
 			this.renderStatus();
 
-			var toLoad = PACK_REGISTRY.filter(function (entry) {
+			var coreKey = this.getCorePackKey();
+			var toLoad = this.getPackRegistry().filter(function (entry) {
 				return self.state.enabledPacks.indexOf(entry.key) !== -1;
 			});
 
@@ -1492,10 +1576,11 @@
 				return loadPackScript(entry);
 			}))
 				.then(function (datasets) {
+					if (token !== self.loadToken) return;
 					var cards = [];
 					datasets.forEach(function (data, index) {
 						var entry = toLoad[index];
-						var isCore = entry.key === 'core';
+						var isCore = entry.key === coreKey;
 						data.cards.forEach(function (c) {
 							cards.push({
 								id: c.id,
@@ -1520,6 +1605,7 @@
 					self.renderAll();
 				})
 				.catch(function (err) {
+					if (token !== self.loadToken) return;
 					self.renderAll();
 					self.showToast('加载失败');
 					console.error(err);
@@ -1528,8 +1614,10 @@
 
 		renderPackToggles: function () {
 			var self = this;
-			this.els.packToggles.innerHTML = PACK_REGISTRY.map(function (entry) {
-				var isCore = entry.key === 'core';
+			this.normalizeEnabledPacks();
+			var coreKey = this.getCorePackKey();
+			this.els.packToggles.innerHTML = this.getPackRegistry().map(function (entry) {
+				var isCore = entry.key === coreKey;
 				var checked = self.state.enabledPacks.indexOf(entry.key) !== -1;
 				return '<label>' +
 					'<input type="checkbox" data-sim-pack="' + entry.key + '"' +
@@ -1550,11 +1638,7 @@
 							return k !== key;
 						});
 					}
-					self.state.history = [];
-					self.state.solvedProphecies = [];
-					self.state.attempts = 0;
-					self.state.prophecyCardId = '';
-					self.state.selectedCardId = '';
+					self.resetSession();
 					self.reloadCards();
 				});
 			});
@@ -1612,8 +1696,10 @@
 				this.state.selectedLevel = levels.length > 0 ? String(levels[0]) : '';
 			}
 
+			var enteredCardIds = this.getEnteredCardIds();
 			var selectedExists = cards.some(function (c) {
-				return c.id === this.state.selectedCardId &&
+				return !enteredCardIds[c.id] &&
+					c.id === this.state.selectedCardId &&
 					c.race === this.state.selectedRace &&
 					String(c.level) === String(this.state.selectedLevel);
 			}, this);
@@ -1662,6 +1748,14 @@
 			return null;
 		},
 
+		getEnteredCardIds: function () {
+			var ids = {};
+			this.state.history.forEach(function (item) {
+				ids[item.cardId] = true;
+			});
+			return ids;
+		},
+
 		matchesProphecy: function (card, prophecy) {
 			if (!card || !prophecy) return false;
 			return card.race === prophecy.race ||
@@ -1688,6 +1782,11 @@
 		addEntry: function () {
 			var card = this.getCardById(this.state.selectedCardId);
 			if (!card) return;
+			if (this.getEnteredCardIds()[card.id]) {
+				this.state.selectedCardId = '';
+				this.renderEntrySelectors();
+				return;
+			}
 			var knifeCount = this.calcKnifeCount(card);
 			this.state.history.push({
 				cardId: card.id,
@@ -1890,10 +1989,14 @@
 			var cards = raceCards.filter(function (card) {
 				return String(card.level) === String(self.state.selectedLevel);
 			}).sort(this.cardSort);
+			var enteredCardIds = this.getEnteredCardIds();
 			this.els.cardRow.innerHTML = cards.map(function (card) {
+				var used = enteredCardIds[card.id];
 				return '<button type="button" class="card-btn' +
 					(card.id === self.state.selectedCardId ? ' selected' : '') +
-					'" data-cardid="' + escapeHtml(card.id) + '">' +
+					(used ? ' used' : '') +
+					'" data-cardid="' + escapeHtml(card.id) + '"' +
+					(used ? ' disabled' : '') + '>' +
 					escapeHtml(card.id) +
 					'</button>';
 			}).join('');

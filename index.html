@@ -5,16 +5,16 @@
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<title>Zeratul</title>
-	<link rel="stylesheet" href="styles.css">
+	<link rel="stylesheet" href="styles.css?v=20260612">
 	<link rel="icon" href="./assets/favicon.ico" type="image/x-icon">
 </head>
 
 <body>
 <header class="app-header">
 	<!-- <img class="header-logo" src="https://i.imgs.ovh/2026/03/06/OZ1E3b.webp" alt="SC2"> -->
-	<h1>Zeratul V3.0.3</h1>
+	<h1>Zeratul V3.0.4</h1>
 	<nav class="header-nav" aria-label="页面">
-		<button id="mainViewBtn" class="header-nav-btn selected" type="button">猜牌</button>
+		<button id="mainViewBtn" class="header-nav-btn selected" type="button">记牌器</button>
 		<button id="simulatorViewBtn" class="header-nav-btn" type="button">模拟器</button>
 	</nav>
 	<div class="header-links">
@@ -126,6 +126,10 @@
 <main id="simulatorApp" class="simulator-app" hidden>
 	<aside class="simulator-sidebar">
 		<section class="panel simulator-pack-panel">
+			<div class="server-mode-toggle" id="simServerModeToggle" role="group" aria-label="服务器">
+				<button type="button" data-sim-server-mode="official">正式服</button>
+				<button type="button" data-sim-server-mode="sdf">时代服</button>
+			</div>
 			<div class="dataset-controls simulator-pack-controls" id="simPackToggles"></div>
 		</section>
 	</aside>
@@ -199,7 +203,7 @@
 <div id="updateModal" class="modal">
 	<div class="modal-content update-modal-content">
 		<div class="modal-header">
-			<h2>V3.0.3 更新日志</h2>
+			<h2>V3.0.4 更新日志</h2>
 			<span class="close-btn" id="closeUpdateModal">&times;</span>
 		</div>
 		<div class="modal-body update-modal-body">
@@ -210,13 +214,20 @@
 				</div>
 				<div class="update-item">
 					<span class="update-tag tag-new">新增玩法</span>
-					<span class="info-tips">增加【预言模拟器】功能</span>
+					<span class="info-tips">增加「预言模拟器」功能</span>
 					<span class="info-tips">模拟器内不提供记牌器功能</span>
-					<span class="info-tips">请开始脑力劳动【doge】</span>
+					<span class="info-tips">请开始脑力劳动「doge」</span>
 				</div>
 				<div class="update-item">
 					<span class="update-tag tag-new">卡牌包更新</span>
-					<span class="info-tips">增加【时代服】卡牌包内容兼容</span>
+					<span class="info-tips">增加「时代服」卡牌包内容兼容</span>
+					<span class="info-tips">「记牌器/模拟器」均已支持时代服卡牌包</span>
+				</div>
+				<div class="update-item">
+					<span class="update-tag tag-ui">作者「寄」语</span>
+					<span class="info-tips">生活不易, 冰冰叹气</span>
+					<span class="info-tips">如果这个工具有帮助的话, 求点点关注</span>
+					<span class="info-tips">右上角的福利中可以领取雷神50小时加速</span>
 				</div>
 			</div>
 		</div>
@@ -284,7 +295,7 @@
 
 <div id="simulatorToast" class="simulator-toast" role="status" aria-live="polite"></div>
 
-<script src="app.js"></script>
+<script src="app.js?v=20260612"></script>
 </body>
 
 </html>
