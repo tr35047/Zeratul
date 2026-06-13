@@ -44,7 +44,7 @@ window._packData["core_sdf"] = {"name":"核心","cards":[
 {"id":"扎加拉","race":"Zerg","level":6,"number":9,"value":2600},
 {"id":"凶猛巨兽","race":"Zerg","level":6,"number":1,"value":2000},
 {"id":"斯托科夫","race":"Zerg","level":6,"number":1,"value":500},
-{"id":"好兄弟","race":"Terran","level":1,"number":7,"value":500},
+{"id":"好兄弟","race":"Terran","level":1,"number":7,"value":300},
 {"id":"死神火车","race":"Terran","level":1,"number":6,"value":300},
 {"id":"恶火小队","race":"Terran","level":2,"number":7,"value":600},
 {"id":"挖宝奇兵","race":"Terran","level":2,"number":4,"value":750},
