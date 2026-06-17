@@ -34,7 +34,7 @@ window._packData["core"] = {"name":"核心","cards":[
 {"id":"爆虫滚滚","race":"Zerg","level":3,"number":25,"value":1625},
 {"id":"注卵虫后","race":"Zerg","level":3,"number":5,"value":875},
 {"id":"机械感染","race":"Zerg","level":3,"number":4,"value":800},
-{"id":"孵化所","race":"Zerg","level":4,"number":5,"value":850},
+{"id":"孵化所","race":"Zerg","level":4,"number":8,"value":1500},
 {"id":"弱肉强食","race":"Zerg","level":4,"number":7,"value":1225},
 {"id":"遮天蔽日","race":"Zerg","level":4,"number":10,"value":1248},
 {"id":"感染深渊","race":"Zerg","level":4,"number":5,"value":650},
