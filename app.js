@@ -67,7 +67,8 @@
 		{key: 'pack6_sdf', name: '身经百战', file: 'resource/sdf/pack6_sdf.js'},
 		{key: 'pack7_sdf', name: '暗影渐生', file: 'resource/sdf/pack7_sdf.js'},
 		{key: 'pack8_sdf', name: '拉克希尔', file: 'resource/sdf/pack8_sdf.js'},
-		{key: 'pack9_sdf', name: '历久弥新', file: 'resource/sdf/pack9_sdf.js'}
+		{key: 'pack9_sdf', name: '历久弥新', file: 'resource/sdf/pack9_sdf.js'},
+		{key: 'pack10_sdf', name: '命运抉择', file: 'resource/sdf/pack10_sdf.js'}
 	];
 
 	var APP_PACK_MODES = {
