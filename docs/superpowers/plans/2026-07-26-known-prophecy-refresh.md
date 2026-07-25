@@ -317,4 +317,3 @@ Using the in-app browser, verify at 1440x900 and 390x844:
 - [ ] **Step 5: Commit final verified state**
 
 Commit: `docs: document known prophecy workflow`
-

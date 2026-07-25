@@ -1,6 +1,10 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
 const logic = require('../prophecy-logic.js');
+
+const indexHtml = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
 
 test('normalizeCounts keeps positive integer counts for valid cards', () => {
 	assert.deepEqual(
@@ -90,4 +94,12 @@ test('normalizeStoredState keeps only safe supported values', () => {
 		excludedCardIds: ['Oracle'],
 		predictionLevels: [1, 2]
 	});
+});
+
+test('index loads the stylesheet with the current feature cache version', () => {
+	assert.match(indexHtml, /styles\.css\?v=20260726/);
+});
+
+test('prophecy confirmation explains which records will be cleared', () => {
+	assert.match(indexHtml, /这将清空本轮推理与排除记录，并开始推断下一张预言牌/);
 });
