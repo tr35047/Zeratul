@@ -594,6 +594,22 @@
 			this.renderAll();
 		},
 
+		removeKnownProphecy: function (cardId) {
+			this.state.knownProphecyCounts = window.ZeratulProphecyLogic.decrementCount(
+				this.state.knownProphecyCounts,
+				cardId
+			);
+			this.persist();
+			this.renderAll();
+		},
+
+		clearKnownProphecies: function () {
+			if (!confirm('确认清空全部已有预言？')) return;
+			this.state.knownProphecyCounts = {};
+			this.persist();
+			this.renderAll();
+		},
+
 		isClose: function (a, b) {
 			return a.race === b.race || a.number === b.number || Math.abs(a.value - b.value) <= CLOSE_THRESHOLD;
 		},
@@ -1075,7 +1091,41 @@
 			this.renderCardButtons();
 			this.renderHistory();
 			this.renderCandidates();
+			this.renderKnownProphecies();
 			this.renderPrediction();
+		},
+
+		renderKnownProphecies: function () {
+			var self = this;
+			var counts = this.state.knownProphecyCounts;
+			var knownCards = this.state.cards.filter(function (card) {
+				return card.isCoreSet && counts[card.id] > 0;
+			});
+			var header = '<div class="known-prophecies-header"><span>已有预言</span>';
+			if (knownCards.length === 0) {
+				this.els.knownProphecies.innerHTML = header +
+					'<span class="known-prophecies-empty">尚未记录</span></div>';
+				return;
+			}
+
+			header += '<button type="button" class="known-prophecies-clear">清空</button></div>';
+			var items = knownCards.map(function (card) {
+				return '<div class="known-prophecy-item">' +
+					'<span class="known-prophecy-name">' + escapeHtml(card.id) + '</span>' +
+					'<strong class="known-prophecy-count">×' + counts[card.id] + '</strong>' +
+					'<button type="button" class="known-prophecy-remove" data-cardid="' + escapeHtml(card.id) +
+					'" title="减少一张 ' + escapeHtml(card.id) + '" aria-label="减少一张 ' + escapeHtml(card.id) + '">×</button>' +
+					'</div>';
+			}).join('');
+			this.els.knownProphecies.innerHTML = header + '<div class="known-prophecy-list">' + items + '</div>';
+			this.els.knownProphecies.querySelector('.known-prophecies-clear').addEventListener('click', function () {
+				self.clearKnownProphecies();
+			});
+			this.els.knownProphecies.querySelectorAll('.known-prophecy-remove').forEach(function (btn) {
+				btn.addEventListener('click', function () {
+					self.removeKnownProphecy(btn.dataset.cardid);
+				});
+			});
 		},
 
 		renderRaceLevelSelectors: function () {
