@@ -1626,6 +1626,16 @@ tbody tr:nth-child(even):hover {
 	color: var(--muted);
 }
 
+.prediction-rec-refresh {
+	margin-top: 3px;
+	padding-top: 3px;
+	border-top: 1px solid var(--border);
+	color: var(--gold);
+	font-size: 10px;
+	font-weight: 600;
+	white-space: nowrap;
+}
+
 .prediction-rec-use {
 	font-size: 12px;
 	padding: 4px 10px;

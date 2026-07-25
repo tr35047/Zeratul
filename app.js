@@ -911,9 +911,11 @@
 
 		calcRecommendations: function (candidates) {
 			var self = this;
+			var logic = window.ZeratulProphecyLogic;
 			var cards = this.state.cards;
 			var guesses = this.state.guesses;
 			var predictionLevels = this.state.predictionLevels;
+			var coreCards = cards.filter(function (card) { return card.isCoreSet; });
 
 			// All usable cards (from enabled packs, excluding already guessed)
 			var usedIds = {};
@@ -941,15 +943,26 @@
 					var p2 = notCloseCount / total;
 					infoGain = -p1 * Math.log2(p1) - p2 * Math.log2(p2);
 				}
-				results.push({card: p, infoGain: infoGain, closeCount: closeCount, notCloseCount: notCloseCount});
+				var refreshCount = logic.calculateRefreshCount(
+					p,
+					coreCards,
+					this.state.knownProphecyCounts,
+					function (a, b) { return self.isClose(a, b); }
+				);
+				results.push({
+					card: p,
+					infoGain: infoGain,
+					closeCount: closeCount,
+					notCloseCount: notCloseCount,
+					refreshCount: refreshCount,
+					poolIndex: pi
+				});
 			}
 
 			results = results.filter(function (r) {
 				return r.infoGain > 0;
 			});
-			results.sort(function (a, b) {
-				return b.infoGain - a.infoGain;
-			});
+			results.sort(logic.compareRecommendations);
 			return results.slice(0, 10);
 		},
 
@@ -1031,8 +1044,9 @@
 					if (btn.dataset.level === 'all') {
 						self.state.predictionLevels = [];
 					} else {
-						self.state.predictionLevels = [Number(btn.dataset.level)];
+					self.state.predictionLevels = [Number(btn.dataset.level)];
 					}
+					self.persist();
 					self.renderPrediction();
 				});
 			});
@@ -1065,6 +1079,7 @@
 					'<div class="prediction-rec-gain">' +
 					'<div class="prediction-gain-value">' + gainPct + '%</div>' +
 					'<div class="prediction-gain-label">信息增益</div>' +
+					'<div class="prediction-rec-refresh">免费刷新 ×' + r.refreshCount + '</div>' +
 					'</div>' +
 					'<button class="prediction-rec-use" data-cardid="' + r.card.id + '" data-race="' + r.card.race + '" data-level="' + r.card.level + '">选用</button>' +
 					'</div>';
