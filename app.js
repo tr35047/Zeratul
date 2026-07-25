@@ -4,6 +4,7 @@
 	var CLOSE_THRESHOLD = 200;
 	var MAX_EXPANSION_PACKS = 100;
 	var ASSET_VERSION = '20260612';
+	var GAME_STATE_KEY = 'zeratul_game_state_v1';
 
 	var RACE_CN = {
 		'Protess': '星灵',
@@ -114,6 +115,8 @@
 		state: {
 			cards: [],
 			guesses: [],
+			knownProphecyCounts: {},
+			pendingProphecyId: '',
 			sortBy: 'race',
 			selectedRace: 'Neutral',
 			selectedLevel: '1',
@@ -164,6 +167,8 @@
 				predictionStatus: document.getElementById('predictionStatus'),
 				predictionRecommendations: document.getElementById('predictionRecommendations'),
 				predictionLevelFilter: document.getElementById('predictionLevelFilter'),
+				knownProphecies: document.getElementById('knownProphecies'),
+				prophecyCardName: document.getElementById('prophecyCardName'),
 				sidebarToggle: document.getElementById('sidebarToggle'),
 				sidebar: document.querySelector('.sidebar'),
 				updateModal: document.getElementById('updateModal'),
@@ -408,6 +413,7 @@
 			this.state.enabledPacks = [this.getCorePackKey()];
 			this.state.guesses = [];
 			this.state.excludedCardIds = [];
+			this.state.knownProphecyCounts = {};
 			this.state.predictionLevels = [];
 			this.state.selectedRace = '';
 			this.state.selectedLevel = '';
@@ -452,6 +458,7 @@
 						});
 					});
 					self.state.cards = cards;
+					self.normalizeLoadedState();
 					self.setDatasetInfo('');
 					self.renderAll();
 				})
@@ -504,6 +511,7 @@
 					}
 					self.state.guesses = [];
 					self.state.excludedCardIds = [];
+					self.state.knownProphecyCounts = {};
 					self.persist();
 					self.renderPackToggles();
 					self.reloadCards();
@@ -559,16 +567,27 @@
 			this.renderAll();
 		},
 
-		markProphecy: function () {
+		markProphecy: function (cardId) {
+			if (!cardId) return;
+			this.state.pendingProphecyId = cardId;
+			this.els.prophecyCardName.textContent = cardId;
 			this.els.prophecyModal.style.display = 'block';
 		},
 
 		hideProphecyModal: function () {
 			this.els.prophecyModal.style.display = 'none';
+			this.state.pendingProphecyId = '';
 		},
 
 		confirmProphecy: function () {
-			this.hideProphecyModal();
+			var cardId = this.state.pendingProphecyId;
+			if (!cardId) return;
+			this.state.knownProphecyCounts = window.ZeratulProphecyLogic.incrementCount(
+				this.state.knownProphecyCounts,
+				cardId
+			);
+			this.els.prophecyModal.style.display = 'none';
+			this.state.pendingProphecyId = '';
 			this.state.guesses = [];
 			this.state.excludedCardIds = [];
 			this.persist();
@@ -1253,14 +1272,14 @@
 					'<td>' + c.value + '</td>' +
 					'<td class="dims-cell">' + dimsHtml + '</td>' +
 					'<td class="action-cell">' +
-					'<button class="prophecy-btn" data-action="prophecy">预言牌</button>' +
+					'<button class="prophecy-btn" data-action="prophecy" data-cardid="' + escapeHtml(c.id) + '">预言牌</button>' +
 					'<button class="exclude-btn" data-action="exclude" data-cardid="' + c.id + '">排除</button>' +
 					'</td></tr>';
 			}).join('');
 
 			this.els.candidatesTableBody.querySelectorAll('button[data-action="prophecy"]').forEach(function (btn) {
 				btn.addEventListener('click', function () {
-					self.markProphecy();
+					self.markProphecy(btn.dataset.cardid);
 				});
 			});
 			this.els.candidatesTableBody.querySelectorAll('button[data-action="exclude"]').forEach(function (btn) {
@@ -1353,9 +1372,52 @@
 		// --- Persistence ---
 
 		persist: function () {
+			try {
+				localStorage.setItem(GAME_STATE_KEY, JSON.stringify({
+					version: 1,
+					enabledPacks: this.state.enabledPacks,
+					guesses: this.state.guesses,
+					excludedCardIds: this.state.excludedCardIds,
+					knownProphecyCounts: this.state.knownProphecyCounts,
+					predictionLevels: this.state.predictionLevels
+				}));
+			} catch (e) {}
 		},
 
 		restoreState: function () {
+			try {
+				var raw = localStorage.getItem(GAME_STATE_KEY);
+				if (!raw) return;
+				var allowedPacks = PACK_REGISTRY.map(function (entry) { return entry.key; });
+				var restored = window.ZeratulProphecyLogic.normalizeStoredState(JSON.parse(raw), allowedPacks);
+				if (!restored) return;
+				this.state.serverMode = 'official';
+				this.state.enabledPacks = restored.enabledPacks;
+				this.state.guesses = restored.guesses;
+				this.state.excludedCardIds = restored.excludedCardIds;
+				this.state.knownProphecyCounts = restored.knownProphecyCounts;
+				this.state.predictionLevels = restored.predictionLevels;
+			} catch (e) {}
+		},
+
+		normalizeLoadedState: function () {
+			var loadedIds = {};
+			var coreIds = [];
+			this.state.cards.forEach(function (card) {
+				loadedIds[card.id] = true;
+				if (card.isCoreSet) coreIds.push(card.id);
+			});
+			this.state.guesses = this.state.guesses.filter(function (guess) {
+				return !!loadedIds[guess.cardId];
+			});
+			this.state.excludedCardIds = this.state.excludedCardIds.filter(function (cardId) {
+				return coreIds.indexOf(cardId) !== -1;
+			});
+			this.state.knownProphecyCounts = window.ZeratulProphecyLogic.normalizeCounts(
+				this.state.knownProphecyCounts,
+				coreIds
+			);
+			this.persist();
 		}
 	};
 
