@@ -69,10 +69,21 @@
 - 对未使用卡牌计算信息增益
 - 推荐最适合继续试探的卡牌
 - 支持按等级过滤推荐池
+- 推荐牌同时显示可触发的免费刷新次数
+- 推荐先按信息增益排序，同增益时优先免费刷新更多的牌
 - 候选只剩一张时展示锁定结果
 - 无候选牌时展示警告状态
 
-### 7. 弹窗与顶部入口
+### 7. 已有预言与状态保存
+
+- 在候选表中确认预言牌后自动记录
+- 支持同一预言牌重复出现并按次数累计
+- 支持逐张删除和清空全部已有预言
+- 使用 `localStorage.zeratul_game_state_v1` 保存卡包、推理记录、排除项、已有预言和推荐等级
+- 切换扩展包视为新对局，同时清空已有预言与当前推理
+- 时代服入口已隐藏，相关代码与数据保留
+
+### 8. 弹窗与顶部入口
 
 - 预言确认弹窗支持确认、取消、关闭、遮罩关闭
 - 打开页面时展示更新日志弹窗
@@ -82,7 +93,7 @@
 - 福利弹窗支持复制兑换口令
 - 福利弹窗不会在页面打开时自动展示
 
-### 8. 界面与响应式
+### 9. 界面与响应式
 
 - 三栏布局：卡包选择、操作记录、预测候选
 - 星际争霸2 神族风格视觉
@@ -123,9 +134,14 @@
 - `candidateConsistent()` / `getCandidates()`：候选计算
 - `buildConstraints()`：约束推断
 - `calcRecommendations()`：推荐牌计算
+- `renderKnownProphecies()`：已有预言管理与渲染
+- `persist()` / `restoreState()`：当前对局状态持久化
 - `renderAll()`：整体渲染
 
-当前状态持久化接口 `persist()` 与 `restoreState()` 已预留，尚未实现。
+### `prophecy-logic.js`
+
+负责无 DOM 依赖的纯逻辑：已有预言计数、免费刷新计算、推荐比较和持久化数据校验。
+该模块同时支持浏览器全局对象与 Node.js `require()`，便于无依赖测试。
 
 ### `styles.css`
 
@@ -164,11 +180,14 @@ window._packData["packKey"] = {
 Zeratul/
 ├─ index.html          # 页面入口
 ├─ app.js              # 业务逻辑
+├─ prophecy-logic.js   # 预言计数、刷新和状态校验
 ├─ styles.css          # 样式与响应式布局
 ├─ .gitignore          # Git 忽略配置
 ├─ README.md           # 项目说明
 ├─ assets/
 │  └─ favicon.ico      # 站点图标
+├─ tests/
+│  └─ prophecy-logic.test.js
 └─ resource/
    └─ data/
       ├─ core.js       # 核心
@@ -206,7 +225,7 @@ Zeratul/
 
 ## 构建与运行方式
 
-本项目没有打包、编译、测试或发布脚本，属于直接运行的静态页面项目。
+本项目没有打包、编译或发布脚本，属于直接运行的静态页面项目。
 
 ### 本地运行
 
@@ -230,6 +249,14 @@ python -m http.server 8080
 - 无 CI 配置
 
 当前“构建”方式就是直接托管静态文件。
+
+### 测试
+
+安装 Node.js 后可使用内置测试运行器，无需安装 npm 依赖：
+
+```powershell
+node --test tests/prophecy-logic.test.js
+```
 
 ## 依赖与外部资源
 

@@ -4,6 +4,7 @@
 	var CLOSE_THRESHOLD = 200;
 	var MAX_EXPANSION_PACKS = 100;
 	var ASSET_VERSION = '20260612';
+	var GAME_STATE_KEY = 'zeratul_game_state_v1';
 
 	var RACE_CN = {
 		'Protess': '星灵',
@@ -114,6 +115,8 @@
 		state: {
 			cards: [],
 			guesses: [],
+			knownProphecyCounts: {},
+			pendingProphecyId: '',
 			sortBy: 'race',
 			selectedRace: 'Neutral',
 			selectedLevel: '1',
@@ -164,6 +167,8 @@
 				predictionStatus: document.getElementById('predictionStatus'),
 				predictionRecommendations: document.getElementById('predictionRecommendations'),
 				predictionLevelFilter: document.getElementById('predictionLevelFilter'),
+				knownProphecies: document.getElementById('knownProphecies'),
+				prophecyCardName: document.getElementById('prophecyCardName'),
 				sidebarToggle: document.getElementById('sidebarToggle'),
 				sidebar: document.querySelector('.sidebar'),
 				updateModal: document.getElementById('updateModal'),
@@ -408,6 +413,7 @@
 			this.state.enabledPacks = [this.getCorePackKey()];
 			this.state.guesses = [];
 			this.state.excludedCardIds = [];
+			this.state.knownProphecyCounts = {};
 			this.state.predictionLevels = [];
 			this.state.selectedRace = '';
 			this.state.selectedLevel = '';
@@ -452,6 +458,7 @@
 						});
 					});
 					self.state.cards = cards;
+					self.normalizeLoadedState();
 					self.setDatasetInfo('');
 					self.renderAll();
 				})
@@ -504,6 +511,7 @@
 					}
 					self.state.guesses = [];
 					self.state.excludedCardIds = [];
+					self.state.knownProphecyCounts = {};
 					self.persist();
 					self.renderPackToggles();
 					self.reloadCards();
@@ -559,18 +567,45 @@
 			this.renderAll();
 		},
 
-		markProphecy: function () {
+		markProphecy: function (cardId) {
+			if (!cardId) return;
+			this.state.pendingProphecyId = cardId;
+			this.els.prophecyCardName.textContent = cardId;
 			this.els.prophecyModal.style.display = 'block';
 		},
 
 		hideProphecyModal: function () {
 			this.els.prophecyModal.style.display = 'none';
+			this.state.pendingProphecyId = '';
 		},
 
 		confirmProphecy: function () {
-			this.hideProphecyModal();
+			var cardId = this.state.pendingProphecyId;
+			if (!cardId) return;
+			this.state.knownProphecyCounts = window.ZeratulProphecyLogic.incrementCount(
+				this.state.knownProphecyCounts,
+				cardId
+			);
+			this.els.prophecyModal.style.display = 'none';
+			this.state.pendingProphecyId = '';
 			this.state.guesses = [];
 			this.state.excludedCardIds = [];
+			this.persist();
+			this.renderAll();
+		},
+
+		removeKnownProphecy: function (cardId) {
+			this.state.knownProphecyCounts = window.ZeratulProphecyLogic.decrementCount(
+				this.state.knownProphecyCounts,
+				cardId
+			);
+			this.persist();
+			this.renderAll();
+		},
+
+		clearKnownProphecies: function () {
+			if (!confirm('确认清空全部已有预言？')) return;
+			this.state.knownProphecyCounts = {};
 			this.persist();
 			this.renderAll();
 		},
@@ -876,9 +911,11 @@
 
 		calcRecommendations: function (candidates) {
 			var self = this;
+			var logic = window.ZeratulProphecyLogic;
 			var cards = this.state.cards;
 			var guesses = this.state.guesses;
 			var predictionLevels = this.state.predictionLevels;
+			var coreCards = cards.filter(function (card) { return card.isCoreSet; });
 
 			// All usable cards (from enabled packs, excluding already guessed)
 			var usedIds = {};
@@ -906,15 +943,26 @@
 					var p2 = notCloseCount / total;
 					infoGain = -p1 * Math.log2(p1) - p2 * Math.log2(p2);
 				}
-				results.push({card: p, infoGain: infoGain, closeCount: closeCount, notCloseCount: notCloseCount});
+				var refreshCount = logic.calculateRefreshCount(
+					p,
+					coreCards,
+					this.state.knownProphecyCounts,
+					function (a, b) { return self.isClose(a, b); }
+				);
+				results.push({
+					card: p,
+					infoGain: infoGain,
+					closeCount: closeCount,
+					notCloseCount: notCloseCount,
+					refreshCount: refreshCount,
+					poolIndex: pi
+				});
 			}
 
 			results = results.filter(function (r) {
 				return r.infoGain > 0;
 			});
-			results.sort(function (a, b) {
-				return b.infoGain - a.infoGain;
-			});
+			results.sort(logic.compareRecommendations);
 			return results.slice(0, 10);
 		},
 
@@ -996,8 +1044,9 @@
 					if (btn.dataset.level === 'all') {
 						self.state.predictionLevels = [];
 					} else {
-						self.state.predictionLevels = [Number(btn.dataset.level)];
+					self.state.predictionLevels = [Number(btn.dataset.level)];
 					}
+					self.persist();
 					self.renderPrediction();
 				});
 			});
@@ -1030,6 +1079,7 @@
 					'<div class="prediction-rec-gain">' +
 					'<div class="prediction-gain-value">' + gainPct + '%</div>' +
 					'<div class="prediction-gain-label">信息增益</div>' +
+					'<div class="prediction-rec-refresh">免费刷新 ×' + r.refreshCount + '</div>' +
 					'</div>' +
 					'<button class="prediction-rec-use" data-cardid="' + r.card.id + '" data-race="' + r.card.race + '" data-level="' + r.card.level + '">选用</button>' +
 					'</div>';
@@ -1056,7 +1106,41 @@
 			this.renderCardButtons();
 			this.renderHistory();
 			this.renderCandidates();
+			this.renderKnownProphecies();
 			this.renderPrediction();
+		},
+
+		renderKnownProphecies: function () {
+			var self = this;
+			var counts = this.state.knownProphecyCounts;
+			var knownCards = this.state.cards.filter(function (card) {
+				return card.isCoreSet && counts[card.id] > 0;
+			});
+			var header = '<div class="known-prophecies-header"><span>已有预言</span>';
+			if (knownCards.length === 0) {
+				this.els.knownProphecies.innerHTML = header +
+					'<span class="known-prophecies-empty">尚未记录</span></div>';
+				return;
+			}
+
+			header += '<button type="button" class="known-prophecies-clear">清空</button></div>';
+			var items = knownCards.map(function (card) {
+				return '<div class="known-prophecy-item">' +
+					'<span class="known-prophecy-name">' + escapeHtml(card.id) + '</span>' +
+					'<strong class="known-prophecy-count">×' + counts[card.id] + '</strong>' +
+					'<button type="button" class="known-prophecy-remove" data-cardid="' + escapeHtml(card.id) +
+					'" title="减少一张 ' + escapeHtml(card.id) + '" aria-label="减少一张 ' + escapeHtml(card.id) + '">×</button>' +
+					'</div>';
+			}).join('');
+			this.els.knownProphecies.innerHTML = header + '<div class="known-prophecy-list">' + items + '</div>';
+			this.els.knownProphecies.querySelector('.known-prophecies-clear').addEventListener('click', function () {
+				self.clearKnownProphecies();
+			});
+			this.els.knownProphecies.querySelectorAll('.known-prophecy-remove').forEach(function (btn) {
+				btn.addEventListener('click', function () {
+					self.removeKnownProphecy(btn.dataset.cardid);
+				});
+			});
 		},
 
 		renderRaceLevelSelectors: function () {
@@ -1253,14 +1337,14 @@
 					'<td>' + c.value + '</td>' +
 					'<td class="dims-cell">' + dimsHtml + '</td>' +
 					'<td class="action-cell">' +
-					'<button class="prophecy-btn" data-action="prophecy">预言牌</button>' +
+					'<button class="prophecy-btn" data-action="prophecy" data-cardid="' + escapeHtml(c.id) + '">预言牌</button>' +
 					'<button class="exclude-btn" data-action="exclude" data-cardid="' + c.id + '">排除</button>' +
 					'</td></tr>';
 			}).join('');
 
 			this.els.candidatesTableBody.querySelectorAll('button[data-action="prophecy"]').forEach(function (btn) {
 				btn.addEventListener('click', function () {
-					self.markProphecy();
+					self.markProphecy(btn.dataset.cardid);
 				});
 			});
 			this.els.candidatesTableBody.querySelectorAll('button[data-action="exclude"]').forEach(function (btn) {
@@ -1353,9 +1437,52 @@
 		// --- Persistence ---
 
 		persist: function () {
+			try {
+				localStorage.setItem(GAME_STATE_KEY, JSON.stringify({
+					version: 1,
+					enabledPacks: this.state.enabledPacks,
+					guesses: this.state.guesses,
+					excludedCardIds: this.state.excludedCardIds,
+					knownProphecyCounts: this.state.knownProphecyCounts,
+					predictionLevels: this.state.predictionLevels
+				}));
+			} catch (e) {}
 		},
 
 		restoreState: function () {
+			try {
+				var raw = localStorage.getItem(GAME_STATE_KEY);
+				if (!raw) return;
+				var allowedPacks = PACK_REGISTRY.map(function (entry) { return entry.key; });
+				var restored = window.ZeratulProphecyLogic.normalizeStoredState(JSON.parse(raw), allowedPacks);
+				if (!restored) return;
+				this.state.serverMode = 'official';
+				this.state.enabledPacks = restored.enabledPacks;
+				this.state.guesses = restored.guesses;
+				this.state.excludedCardIds = restored.excludedCardIds;
+				this.state.knownProphecyCounts = restored.knownProphecyCounts;
+				this.state.predictionLevels = restored.predictionLevels;
+			} catch (e) {}
+		},
+
+		normalizeLoadedState: function () {
+			var loadedIds = {};
+			var coreIds = [];
+			this.state.cards.forEach(function (card) {
+				loadedIds[card.id] = true;
+				if (card.isCoreSet) coreIds.push(card.id);
+			});
+			this.state.guesses = this.state.guesses.filter(function (guess) {
+				return !!loadedIds[guess.cardId];
+			});
+			this.state.excludedCardIds = this.state.excludedCardIds.filter(function (cardId) {
+				return coreIds.indexOf(cardId) !== -1;
+			});
+			this.state.knownProphecyCounts = window.ZeratulProphecyLogic.normalizeCounts(
+				this.state.knownProphecyCounts,
+				coreIds
+			);
+			this.persist();
 		}
 	};
 

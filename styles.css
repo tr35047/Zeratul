@@ -277,7 +277,7 @@ body {
 }
 
 .server-mode-toggle {
-	display: grid;
+	display: none;
 	grid-template-columns: 1fr 1fr;
 	gap: 2px;
 	/* margin-bottom: var(--sp-sm); */
@@ -1372,6 +1372,89 @@ tbody tr:nth-child(even):hover {
 	margin-bottom: 0;
 }
 
+.known-prophecies {
+	margin-bottom: var(--sp-sm);
+	padding-bottom: var(--sp-sm);
+	border-bottom: 1px solid var(--border);
+}
+
+.known-prophecies-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--sp-sm);
+	min-height: 28px;
+	font-size: 12px;
+	color: var(--muted);
+}
+
+.known-prophecies-empty {
+	font-weight: 400;
+	opacity: 0.75;
+}
+
+.known-prophecies-clear {
+	padding: 2px 7px;
+	border: 0;
+	background: transparent;
+	color: var(--muted);
+	font-size: 11px;
+	cursor: pointer;
+}
+
+.known-prophecies-clear:hover {
+	color: var(--danger);
+}
+
+.known-prophecy-list {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 4px;
+}
+
+.known-prophecy-item {
+	display: inline-grid;
+	grid-template-columns: minmax(0, auto) auto 28px;
+	align-items: center;
+	max-width: 100%;
+	min-height: 28px;
+	border: 1px solid var(--border);
+	border-radius: var(--radius);
+	background: rgba(0, 188, 212, 0.06);
+	color: var(--text);
+}
+
+.known-prophecy-name {
+	min-width: 0;
+	padding-left: 8px;
+	font-size: 12px;
+	overflow-wrap: anywhere;
+}
+
+.known-prophecy-count {
+	padding: 0 5px;
+	color: var(--gold);
+	font-size: 12px;
+}
+
+.known-prophecy-remove {
+	width: 28px;
+	height: 28px;
+	padding: 0;
+	border: 0;
+	border-left: 1px solid var(--border);
+	border-radius: 0;
+	background: transparent;
+	color: var(--muted);
+	font-size: 16px;
+	cursor: pointer;
+}
+
+.known-prophecy-remove:hover {
+	color: var(--danger);
+	background: rgba(229, 57, 53, 0.08);
+}
+
 /* 等级筛选按钮行 */
 .prediction-level-filter {
 	display: flex;
@@ -1541,6 +1624,16 @@ tbody tr:nth-child(even):hover {
 .prediction-gain-label {
 	font-size: 10px;
 	color: var(--muted);
+}
+
+.prediction-rec-refresh {
+	margin-top: 3px;
+	padding-top: 3px;
+	border-top: 1px solid var(--border);
+	color: var(--gold);
+	font-size: 10px;
+	font-weight: 600;
+	white-space: nowrap;
 }
 
 .prediction-rec-use {
@@ -2347,6 +2440,11 @@ tbody tr:nth-child(even):hover {
 	/* 精准预测面板 */
 	.prediction-panel {
 		flex: none !important;
+	}
+
+	.known-prophecies {
+		margin-bottom: var(--sp-xs);
+		padding-bottom: var(--sp-xs);
 	}
 
 	.prediction-level-filter {
