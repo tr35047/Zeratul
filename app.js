@@ -1889,7 +1889,7 @@
 			if (!card || !prophecy) return false;
 			return card.race === prophecy.race ||
 				card.number === prophecy.number ||
-				Math.abs(card.value - prophecy.value) < CLOSE_THRESHOLD;
+				Math.abs(card.value - prophecy.value) <= CLOSE_THRESHOLD;
 		},
 
 		calcKnifeCount: function (card) {
