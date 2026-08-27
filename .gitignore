@@ -3,3 +3,6 @@
 .idea
 .claude
 CLAUDE.md
+.idea/*
+docs/*
+tests/*
