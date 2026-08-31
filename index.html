@@ -12,7 +12,7 @@
 <body>
 <header class="app-header">
 	<!-- <img class="header-logo" src="https://i.imgs.ovh/2026/03/06/OZ1E3b.webp" alt="SC2"> -->
-	<h1>Zeratul V3.1.2</h1>
+	<h1>Zeratul V3.1.3</h1>
 	<nav class="header-nav" aria-label="页面">
 		<button id="mainViewBtn" class="header-nav-btn selected" type="button">记牌器</button>
 		<button id="simulatorViewBtn" class="header-nav-btn" type="button">模拟器</button>
@@ -32,7 +32,8 @@
 		<div class="sidebar-frame">
 			<div class="server-mode-toggle" id="serverModeToggle" role="group" aria-label="服务器">
 				<button type="button" data-server-mode="official">正式服</button>
-				<button type="button" data-server-mode="sdf">时代服</button>
+				<!-- <button type="button" data-server-mode="sdf">时代服</button> -->
+				<button type="button" data-server-mode="yf">亚服</button>
 			</div>
 			<div class="dataset-controls" id="packToggles"></div>
 		</div>
@@ -130,7 +131,8 @@
 		<section class="panel simulator-pack-panel">
 			<div class="server-mode-toggle" id="simServerModeToggle" role="group" aria-label="服务器">
 				<button type="button" data-sim-server-mode="official">正式服</button>
-				<button type="button" data-sim-server-mode="sdf">时代服</button>
+				<!-- <button type="button" data-sim-server-mode="sdf">时代服</button> -->
+				<button type="button" data-sim-server-mode="yf">亚服</button>
 			</div>
 			<div class="dataset-controls simulator-pack-controls" id="simPackToggles"></div>
 		</section>
@@ -205,7 +207,7 @@
 <div id="updateModal" class="modal">
 	<div class="modal-content update-modal-content">
 		<div class="modal-header">
-			<h2>V3.1.2 更新日志</h2>
+			<h2>V3.1.3 更新日志</h2>
 			<span class="close-btn" id="closeUpdateModal">&times;</span>
 		</div>
 		<div class="modal-body update-modal-body">
@@ -215,18 +217,22 @@
 					<span class="info-tips">https://zeratul-fizkx016x.maozi.io/</span>
 				</div>
 				<div class="update-item">
+					<span class="update-tag tag-new">亚服支持</span>
+					<span class="info-tips">增加了对亚服版本的支持</span>
+				</div>
+				<div class="update-item">
 					<span class="update-tag tag-new">预言功能</span>
 					<span class="info-tips">支持记录已猜中的预言牌及重复次数</span>
 					<span class="info-tips">推荐区显示可触发的免费刷新次数</span>
 					<span class="info-tips">推荐排序优先信息增益，再比较刷新次数</span>
 					<span class="info-tips">切换拓展包时清空预言记录</span>
 				</div>
-				<div class="update-item">
+				<!-- <div class="update-item">
 					<span class="update-tag tag-new">卡牌调整</span>
 					<span class="info-tips">凶残巨兽：单位数 1，战力 500</span>
 					<span class="info-tips">地雷禁区：单位数 2，战力 300</span>
 					<span class="info-tips">虚空大军：单位数 6，战力 950</span>
-				</div>
+				</div> -->
 				<div class="update-item">
 					<span class="update-tag tag-ui">作者「寄」语</span>
 					<span class="info-tips">生活不易, 冰冰叹气</span>
@@ -301,7 +307,7 @@
 <div id="simulatorToast" class="simulator-toast" role="status" aria-live="polite"></div>
 
 <script src="prophecy-logic.js?v=20260726"></script>
-<script src="app.js?v=20260726"></script>
+<script src="app.js?v=20260831"></script>
 </body>
 
 </html>

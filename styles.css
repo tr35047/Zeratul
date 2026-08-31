@@ -277,8 +277,8 @@ body {
 }
 
 .server-mode-toggle {
-	display: none;
-	grid-template-columns: 1fr 1fr;
+	display: grid;
+	grid-template-columns: repeat(2, 1fr);
 	gap: 2px;
 	/* margin-bottom: var(--sp-sm); */
 	padding: 2px;

@@ -3,7 +3,7 @@
 
 	var CLOSE_THRESHOLD = 200;
 	var MAX_EXPANSION_PACKS = 100;
-	var ASSET_VERSION = '20260612';
+	var ASSET_VERSION = '20260831';
 	var GAME_STATE_KEY = 'zeratul_game_state_v1';
 
 	var RACE_CN = {
@@ -72,43 +72,58 @@
 		{key: 'pack10_sdf', name: '命运抉择', file: 'resource/sdf/pack10_sdf.js'}
 	];
 
+	var YF_PACK_REGISTRY = [
+		{key: 'core_yf', dataKey: 'core', name: '核心', file: 'resource/yf/core_yf.js'},
+		{key: 'pack1_yf', dataKey: 'pack1', name: '军备竞赛', file: 'resource/yf/pack1_yf.js'},
+		{key: 'pack2_yf', dataKey: 'pack2', name: '作战计划', file: 'resource/yf/pack2_yf.js'},
+		{key: 'pack3_yf', dataKey: 'pack3', name: '卷土重来', file: 'resource/yf/pack3_yf.js'},
+		{key: 'pack4_yf', dataKey: 'pack4', name: '时不我待', file: 'resource/yf/pack4_yf.js'},
+		{key: 'pack5_yf', dataKey: 'pack5', name: '重装上阵', file: 'resource/yf/pack5_yf.js'},
+		{key: 'pack6_yf', dataKey: 'pack6', name: '穷兵黩武', file: 'resource/yf/pack6_yf.js'},
+		{key: 'pack7_yf', dataKey: 'pack7', name: '一念之差', file: 'resource/yf/pack7_yf.js'},
+		{key: 'pack9_yf', dataKey: 'pack9', name: '身经百战', file: 'resource/yf/pack9_yf.js'},
+		{key: 'pack10_yf', dataKey: 'pack10', name: '比特狂潮', file: 'resource/yf/pack10_yf.js'}
+	];
+
 	var APP_PACK_MODES = {
 		official: {coreKey: 'core', packs: PACK_REGISTRY},
-		sdf: {coreKey: 'core_sdf', packs: SDF_PACK_REGISTRY}
+		sdf: {coreKey: 'core_sdf', packs: SDF_PACK_REGISTRY},
+		yf: {coreKey: 'core_yf', packs: YF_PACK_REGISTRY}
 	};
 
-	// Track which scripts have been injected
-	var loadedScripts = {};
+	var loadedPackData = {};
+	var packLoadPromises = {};
 
 	function loadPackScript(entry) {
-		return new Promise(function (resolve, reject) {
-			// Already in global registry (cached from previous load)
-			if (window._packData && window._packData[entry.key]) {
-				resolve(window._packData[entry.key]);
-				return;
-			}
-			// Already loading / loaded script tag
-			if (loadedScripts[entry.key]) {
-				// Script was injected but data might not be ready yet (unlikely but safe)
-				var check = setInterval(function () {
-					if (window._packData && window._packData[entry.key]) {
-						clearInterval(check);
-						resolve(window._packData[entry.key]);
-					}
-				}, 10);
-				return;
-			}
-			loadedScripts[entry.key] = true;
+		if (loadedPackData[entry.key]) {
+			return Promise.resolve(loadedPackData[entry.key]);
+		}
+		if (packLoadPromises[entry.key]) {
+			return packLoadPromises[entry.key];
+		}
+
+		packLoadPromises[entry.key] = new Promise(function (resolve, reject) {
+			var dataKey = entry.dataKey || entry.key;
 			var script = document.createElement('script');
 			script.src = versionedAsset(entry.file);
 			script.onload = function () {
-				resolve(window._packData[entry.key]);
+				var data = window._packData && window._packData[dataKey];
+				if (!data) {
+					delete packLoadPromises[entry.key];
+					reject(new Error('Missing pack data for ' + entry.file));
+					return;
+				}
+				loadedPackData[entry.key] = data;
+				resolve(data);
 			};
 			script.onerror = function () {
+				delete packLoadPromises[entry.key];
 				reject(new Error('Failed to load ' + entry.file));
 			};
 			document.head.appendChild(script);
 		});
+
+		return packLoadPromises[entry.key];
 	}
 
 	var App = {
@@ -127,6 +142,7 @@
 			sidebarCollapsed: false,
 			excludedCardIds: []
 		},
+		loadToken: 0,
 
 		init: function () {
 			var self = this;
@@ -436,6 +452,7 @@
 
 		reloadCards: function () {
 			var self = this;
+			var token = ++this.loadToken;
 			this.normalizeEnabledPacks();
 			this.setDatasetInfo('加载中...');
 
@@ -447,6 +464,7 @@
 				return loadPackScript(e);
 			}))
 				.then(function (datasets) {
+					if (token !== self.loadToken) return;
 					var cards = [];
 					datasets.forEach(function (data) {
 						var isCore = data.name === '核心';
@@ -463,6 +481,7 @@
 					self.renderAll();
 				})
 				.catch(function (err) {
+					if (token !== self.loadToken) return;
 					self.setDatasetInfo('加载失败');
 					console.error(err);
 				});
@@ -1440,6 +1459,7 @@
 			try {
 				localStorage.setItem(GAME_STATE_KEY, JSON.stringify({
 					version: 1,
+					serverMode: this.getPackMode(),
 					enabledPacks: this.state.enabledPacks,
 					guesses: this.state.guesses,
 					excludedCardIds: this.state.excludedCardIds,
@@ -1453,10 +1473,12 @@
 			try {
 				var raw = localStorage.getItem(GAME_STATE_KEY);
 				if (!raw) return;
-				var allowedPacks = PACK_REGISTRY.map(function (entry) { return entry.key; });
-				var restored = window.ZeratulProphecyLogic.normalizeStoredState(JSON.parse(raw), allowedPacks);
+				var saved = JSON.parse(raw);
+				var serverMode = APP_PACK_MODES[saved.serverMode] ? saved.serverMode : 'official';
+				var allowedPacks = APP_PACK_MODES[serverMode].packs.map(function (entry) { return entry.key; });
+				var restored = window.ZeratulProphecyLogic.normalizeStoredState(saved, allowedPacks);
 				if (!restored) return;
-				this.state.serverMode = 'official';
+				this.state.serverMode = serverMode;
 				this.state.enabledPacks = restored.enabledPacks;
 				this.state.guesses = restored.guesses;
 				this.state.excludedCardIds = restored.excludedCardIds;
