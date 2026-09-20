@@ -237,6 +237,11 @@ body {
 	line-height: 2;
 }
 
+.update-warning {
+	color: #ff6b6b;
+	font-weight: 600;
+}
+
 /* 数据集开关行 */
 .dataset-controls {
 	display: flex;
