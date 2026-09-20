@@ -1,6 +1,5 @@
 window._packData = window._packData || {};
 window._packData["packDuo1"] = {"name":"同卵双狗","cards":[
-{"id":"探机","race":"Neutral","level":0,"number":6,"value":300},
 {"id":"共同富裕","race":"Protess","level":1,"number":6,"value":450},
 {"id":"走私星港","race":"Neutral","level":3,"number":3,"value":650},
 {"id":"研发中心","race":"Terran","level":4,"number":7,"value":1350},

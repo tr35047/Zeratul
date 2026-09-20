@@ -3,14 +3,17 @@
 
 	var CLOSE_THRESHOLD = 200;
 	var MAX_EXPANSION_PACKS = 100;
-	var ASSET_VERSION = '20260831';
+	var ASSET_VERSION = '20260919';
 	var GAME_STATE_KEY = 'zeratul_game_state_v1';
+	var SPECIAL_PACK_KEY = 'packSpecial';
+	var SPECIAL_GROUP = 'Special';
 
 	var RACE_CN = {
 		'Protess': '星灵',
 		'Zerg': '异虫',
 		'Terran': '人族',
-		'Neutral': '中立'
+		'Neutral': '中立',
+		'Special': '特殊'
 	};
 
 	function raceName(race) {
@@ -55,7 +58,8 @@
 		{key: 'pack9', name: '身经百战', file: 'resource/data/pack9.js'},
 		{key: 'pack10', name: '比特狂潮', file: 'resource/data/pack10.js'},
 		{key: 'pack11', name: '中世纪集市', file: 'resource/data/pack11.js'},
-		{key: 'packDuo1', name: '同卵双狗', file: 'resource/data/packDuo1.js'}
+		{key: 'packDuo1', name: '同卵双狗', file: 'resource/data/packDuo1.js'},
+		{key: 'packSpecial', name: '特殊卡牌', file: 'resource/data/packSpecial.js'}
 	];
 
 	var SDF_PACK_REGISTRY = [
@@ -466,12 +470,14 @@
 				.then(function (datasets) {
 					if (token !== self.loadToken) return;
 					var cards = [];
-					datasets.forEach(function (data) {
-						var isCore = data.name === '核心';
+					datasets.forEach(function (data, index) {
+						var entry = toLoad[index];
+						var isCore = entry.key === self.getCorePackKey();
 						data.cards.forEach(function (c) {
 							cards.push({
 								id: c.id, race: c.race, level: c.level,
-								number: c.number, value: c.value, isCoreSet: isCore
+								number: c.number, value: c.value, packKey: entry.key,
+								isCoreSet: isCore
 							});
 						});
 					});
@@ -931,6 +937,7 @@
 		calcRecommendations: function (candidates) {
 			var self = this;
 			var logic = window.ZeratulProphecyLogic;
+			var poolLogic = window.ZeratulCardPoolLogic;
 			var cards = this.state.cards;
 			var guesses = this.state.guesses;
 			var predictionLevels = this.state.predictionLevels;
@@ -941,11 +948,12 @@
 			for (var i = 0; i < guesses.length; i++) {
 				usedIds[guesses[i].cardId] = true;
 			}
-			var pool = cards.filter(function (c) {
-				if (usedIds[c.id]) return false;
-				if (predictionLevels.length > 0 && predictionLevels.indexOf(c.level) === -1) return false;
-				return true;
-			});
+			var pool = poolLogic.getRecommendationPool(
+				cards,
+				usedIds,
+				predictionLevels,
+				SPECIAL_PACK_KEY
+			);
 
 			var results = [];
 			for (var pi = 0; pi < pool.length; pi++) {
@@ -1164,12 +1172,18 @@
 
 		renderRaceLevelSelectors: function () {
 			var self = this;
+			var poolLogic = window.ZeratulCardPoolLogic;
 			var racesSet = {};
 			this.state.cards.forEach(function (c) {
-				if (c.race) racesSet[c.race] = true;
+				if (c.race && !poolLogic.isSpecialCard(c, SPECIAL_PACK_KEY)) racesSet[c.race] = true;
 			});
-			var races = Object.keys(racesSet).sort();
-			var selRace = this.state.selectedRace && racesSet[this.state.selectedRace] ? this.state.selectedRace : '';
+			var races = poolLogic.appendSpecialGroup(
+				Object.keys(racesSet).sort(),
+				this.state.cards,
+				SPECIAL_PACK_KEY,
+				SPECIAL_GROUP
+			);
+			var selRace = races.indexOf(this.state.selectedRace) !== -1 ? this.state.selectedRace : '';
 			if (!selRace && races.length > 0) {
 				selRace = races[0];
 				this.state.selectedRace = selRace;
@@ -1189,8 +1203,8 @@
 			});
 
 			var levelsSet = {};
-			this.state.cards.forEach(function (c) {
-				if (!selRace || c.race === selRace) levelsSet[c.level] = true;
+			poolLogic.filterEntryCards(this.state.cards, selRace, SPECIAL_PACK_KEY, SPECIAL_GROUP).forEach(function (c) {
+				levelsSet[c.level] = true;
 			});
 			var levels = Object.keys(levelsSet).map(Number).sort(function (a, b) {
 				return a - b;
@@ -1217,6 +1231,7 @@
 
 		renderCardButtons: function () {
 			var self = this;
+			var poolLogic = window.ZeratulCardPoolLogic;
 			if (!this.state.selectedRace || !this.state.selectedLevel) {
 				this.els.cardRow.innerHTML = '';
 				this.els.addGuessBtn.disabled = true;
@@ -1224,8 +1239,13 @@
 			}
 			var sr = this.state.selectedRace;
 			var sl = this.state.selectedLevel;
-			var cards = this.state.cards.filter(function (c) {
-				return c.race === sr && String(c.level) === sl;
+			var cards = poolLogic.filterEntryCards(
+				this.state.cards,
+				sr,
+				SPECIAL_PACK_KEY,
+				SPECIAL_GROUP
+			).filter(function (c) {
+				return String(c.level) === sl;
 			}).sort(function (a, b) {
 				return a.number - b.number || a.value - b.value;
 			});
@@ -1827,6 +1847,7 @@
 
 		ensureEntrySelection: function () {
 			var cards = this.state.cards;
+			var poolLogic = window.ZeratulCardPoolLogic;
 			if (cards.length === 0) {
 				this.state.selectedRace = '';
 				this.state.selectedLevel = '';
@@ -1834,24 +1855,26 @@
 				return;
 			}
 
-			var races = this.getRaces(cards);
+			var races = this.getEntryGroups(cards);
 			if (races.indexOf(this.state.selectedRace) === -1) {
 				this.state.selectedRace = races[0] || '';
 			}
 
-			var levelCards = cards.filter(function (c) {
-				return c.race === this.state.selectedRace;
-			}, this);
+			var levelCards = poolLogic.filterEntryCards(
+				cards,
+				this.state.selectedRace,
+				SPECIAL_PACK_KEY,
+				SPECIAL_GROUP
+			);
 			var levels = this.getLevels(levelCards);
 			if (levels.indexOf(Number(this.state.selectedLevel)) === -1) {
 				this.state.selectedLevel = levels.length > 0 ? String(levels[0]) : '';
 			}
 
 			var enteredCardIds = this.getEnteredCardIds();
-			var selectedExists = cards.some(function (c) {
+			var selectedExists = levelCards.some(function (c) {
 				return !enteredCardIds[c.id] &&
 					c.id === this.state.selectedCardId &&
-					c.race === this.state.selectedRace &&
 					String(c.level) === String(this.state.selectedLevel);
 			}, this);
 			if (!selectedExists) {
@@ -1865,6 +1888,19 @@
 				if (card.race) set[card.race] = true;
 			});
 			return Object.keys(set).sort(sortRaces);
+		},
+
+		getEntryGroups: function (cards) {
+			var poolLogic = window.ZeratulCardPoolLogic;
+			var normalCards = cards.filter(function (card) {
+				return !poolLogic.isSpecialCard(card, SPECIAL_PACK_KEY);
+			});
+			return poolLogic.appendSpecialGroup(
+				this.getRaces(normalCards),
+				cards,
+				SPECIAL_PACK_KEY,
+				SPECIAL_GROUP
+			);
 		},
 
 		getLevels: function (cards) {
@@ -2102,7 +2138,8 @@
 
 		renderEntrySelectors: function () {
 			var self = this;
-			var races = this.getRaces(this.state.cards);
+			var poolLogic = window.ZeratulCardPoolLogic;
+			var races = this.getEntryGroups(this.state.cards);
 			this.els.raceRow.innerHTML = races.map(function (race) {
 				return '<button type="button" class="race-btn' +
 					(race === self.state.selectedRace ? ' selected' : '') +
@@ -2120,9 +2157,12 @@
 				});
 			});
 
-			var raceCards = this.state.cards.filter(function (card) {
-				return card.race === self.state.selectedRace;
-			});
+			var raceCards = poolLogic.filterEntryCards(
+				this.state.cards,
+				this.state.selectedRace,
+				SPECIAL_PACK_KEY,
+				SPECIAL_GROUP
+			);
 			var levels = this.getLevels(raceCards);
 			this.els.levelRow.innerHTML = levels.map(function (level) {
 				return '<button type="button" class="level-btn' +
