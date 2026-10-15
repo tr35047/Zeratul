@@ -11,8 +11,8 @@ test('official registry exposes the special card pack', () => {
 });
 
 test('page loads card pool logic before the app with current cache keys', () => {
-	const logicIndex = indexSource.indexOf('card-pool-logic.js?v=20260919');
-	const appIndex = indexSource.indexOf('app.js?v=20260919');
+	const logicIndex = indexSource.indexOf('card-pool-logic.js?v=20261015');
+	const appIndex = indexSource.indexOf('app.js?v=20261015');
 	assert.ok(logicIndex >= 0);
 	assert.ok(appIndex > logicIndex);
 });
