@@ -58,6 +58,7 @@
 		{key: 'pack9', name: '身经百战', file: 'resource/data/pack9.js'},
 		{key: 'pack10', name: '比特狂潮', file: 'resource/data/pack10.js'},
 		{key: 'pack11', name: '中世纪集市', file: 'resource/data/pack11.js'},
+		{key: 'pack12', name: '嘉年庆典', file: 'resource/data/pack12.js'},
 		{key: 'packDuo1', name: '同卵双狗', file: 'resource/data/packDuo1.js'},
 		{key: 'packSpecial', name: '特殊卡牌', file: 'resource/data/packSpecial.js'}
 	];

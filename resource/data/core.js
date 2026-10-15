@@ -44,7 +44,7 @@ window._packData["core"] = {"name":"核心","cards":[
 {"id":"空中管制","race":"Zerg","level":5,"number":5,"value":1600},
 {"id":"腐化大龙","race":"Zerg","level":5,"number":8,"value":2000},
 {"id":"扎加拉","race":"Zerg","level":6,"number":11,"value":3150},
-{"id":"凶猛巨兽","race":"Zerg","level":6,"number":1,"value":2000},
+{"id":"利维坦","race":"Zerg","level":6,"number":1,"value":2000},
 {"id":"斯托科夫","race":"Zerg","level":6,"number":1,"value":500},
 {"id":"死神火车","race":"Terran","level":1,"number":6,"value":500},
 {"id":"好兄弟","race":"Terran","level":1,"number":7,"value":300},
