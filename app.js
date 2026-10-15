@@ -3,7 +3,7 @@
 
 	var CLOSE_THRESHOLD = 200;
 	var MAX_EXPANSION_PACKS = 100;
-	var ASSET_VERSION = '20260919';
+	var ASSET_VERSION = '20261015';
 	var GAME_STATE_KEY = 'zeratul_game_state_v1';
 	var SPECIAL_PACK_KEY = 'packSpecial';
 	var SPECIAL_GROUP = 'Special';

@@ -97,7 +97,7 @@ test('normalizeStoredState keeps only safe supported values', () => {
 });
 
 test('index loads the stylesheet with the current feature cache version', () => {
-	assert.match(indexHtml, /styles\.css\?v=20260919/);
+	assert.match(indexHtml, /styles\.css\?v=20261015/);
 });
 
 test('prophecy confirmation explains which records will be cleared', () => {
