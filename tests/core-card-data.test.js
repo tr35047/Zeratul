@@ -4,14 +4,18 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 
-function loadCoreCards() {
+function loadCards(relativePath, packKey) {
 	const source = fs.readFileSync(
-		path.join(__dirname, '..', 'resource', 'data', 'core.js'),
+		path.join(__dirname, '..', ...relativePath),
 		'utf8'
 	);
 	const context = {window: {}};
-	vm.runInNewContext(source, context, {filename: 'resource/data/core.js'});
-	return context.window._packData.core.cards;
+	vm.runInNewContext(source, context, {filename: relativePath.join('/')});
+	return context.window._packData[packKey].cards;
+}
+
+function loadCoreCards() {
+	return loadCards(['resource', 'data', 'core.js'], 'core');
 }
 
 test('official core cards match the updated in-game stats', () => {
@@ -51,4 +55,18 @@ test('official core card ids are unique and fields remain valid', () => {
 		assert.ok(Number.isInteger(card.number) && card.number >= 0);
 		assert.ok(Number.isInteger(card.value) && card.value >= 0);
 	});
+});
+
+test('Mohandar uses the official-only updated stats', () => {
+	const official = loadCards(['resource', 'data', 'core.js'], 'core')
+		.find((card) => card.id === '莫汉达尔');
+	const yf = loadCards(['resource', 'yf', 'core_yf.js'], 'core')
+		.find((card) => card.id === '莫汉达尔');
+
+	assert.ok(official);
+	assert.equal(official.number, 4);
+	assert.equal(official.value, 1400);
+	assert.ok(yf);
+	assert.equal(yf.number, 5);
+	assert.equal(yf.value, 1800);
 });

@@ -24,10 +24,10 @@
 - Modify: `resource/data/core.js`
 
 **Interfaces:**
-- Consumes: `window._packData.core.cards` 与 `window._packData.core_yf.cards` 数据数组。
+- Consumes: 两个数据文件分别写入的 `window._packData.core.cards` 数据数组。
 - Produces: 正式服“莫汉达尔” `{number: 4, value: 1400}`，亚服仍为 `{number: 5, value: 1800}`。
 
-- [ ] **Step 1: 写入失败的回归测试**
+- [x] **Step 1: 写入失败的回归测试**
 
 在 `tests/core-card-data.test.js` 增加通用数据加载函数，并新增以下断言：
 
@@ -42,7 +42,7 @@ function loadCards(relativePath, packKey) {
 test('Mohandar uses the official-only updated stats', () => {
 	const official = loadCards(['resource', 'data', 'core.js'], 'core')
 		.find((card) => card.id === '莫汉达尔');
-	const yf = loadCards(['resource', 'yf', 'core_yf.js'], 'core_yf')
+	const yf = loadCards(['resource', 'yf', 'core_yf.js'], 'core')
 		.find((card) => card.id === '莫汉达尔');
 
 	assert.ok(official);
@@ -54,13 +54,13 @@ test('Mohandar uses the official-only updated stats', () => {
 });
 ```
 
-- [ ] **Step 2: 运行测试并确认按预期失败**
+- [x] **Step 2: 运行测试并确认按预期失败**
 
 Run: `node --test tests/core-card-data.test.js`
 
 Expected: FAIL，正式服 `official.number` 实际为 `5`，与期望值 `4` 不符。
 
-- [ ] **Step 3: 最小化更新正式服卡牌数据**
+- [x] **Step 3: 最小化更新正式服卡牌数据**
 
 将 `resource/data/core.js` 中卡牌对象改为：
 
@@ -70,13 +70,13 @@ Expected: FAIL，正式服 `official.number` 实际为 `5`，与期望值 `4` �
 
 不修改 `resource/yf/core_yf.js`。
 
-- [ ] **Step 4: 运行相关测试并确认通过**
+- [x] **Step 4: 运行相关测试并确认通过**
 
 Run: `node --test tests/core-card-data.test.js`
 
 Expected: PASS，全部核心卡数据测试通过。
 
-- [ ] **Step 5: 运行完整验证**
+- [x] **Step 5: 运行完整验证**
 
 Run: `node --check app.js`
 
@@ -90,7 +90,7 @@ Run: `git diff --check`
 
 Expected: 无空白错误。
 
-- [ ] **Step 6: 提交实现**
+- [x] **Step 6: 提交实现**
 
 ```bash
 git add tests/core-card-data.test.js resource/data/core.js

@@ -18,7 +18,7 @@ window._packData["core"] = {"name":"核心","cards":[
 {"id":"黑暗教长","race":"Protess","level":5,"number":8,"value":2275},
 {"id":"黄金舰队","race":"Protess","level":5,"number":6,"value":2050},
 {"id":"菲尼克斯","race":"Protess","level":5,"number":6,"value":2100},
-{"id":"莫汉达尔","race":"Protess","level":5,"number":5,"value":1800},
+{"id":"莫汉达尔","race":"Protess","level":5,"number":4,"value":1400},
 {"id":"净化一切","race":"Protess","level":6,"number":7,"value":2000},
 {"id":"阿塔尼斯","race":"Protess","level":6,"number":2,"value":1000},
 {"id":"阿尔达瑞斯","race":"Protess","level":6,"number":1,"value":1000},
