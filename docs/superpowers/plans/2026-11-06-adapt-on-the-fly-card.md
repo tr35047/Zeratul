@@ -23,12 +23,13 @@
 **Files:**
 - Modify: `tests/core-card-data.test.js`
 - Modify: `resource/data/core.js`
+- Modify: `README.md`
 
 **Interfaces:**
 - Consumes: 正式服和亚服文件中的 `window._packData.core.cards`。
 - Produces: 正式服卡牌对象 `{"id":"随机应变","race":"Neutral","level":6,"number":5,"value":3000}`，亚服无同名卡。
 
-- [ ] **Step 1: 写入失败的回归测试**
+- [x] **Step 1: 写入失败的回归测试**
 
 在 `tests/core-card-data.test.js` 追加：
 
@@ -52,13 +53,13 @@ test('Adapt on the Fly is an official-only core card', () => {
 });
 ```
 
-- [ ] **Step 2: 运行测试并确认按预期失败**
+- [x] **Step 2: 运行测试并确认按预期失败**
 
 Run: `node --test tests/core-card-data.test.js`
 
 Expected: FAIL，错误信息包含 `missing 随机应变 from official core`。
 
-- [ ] **Step 3: 最小化新增正式服卡牌数据**
+- [x] **Step 3: 最小化新增正式服卡牌数据**
 
 在 `resource/data/core.js` 的中立六本卡区域加入：
 
@@ -68,13 +69,15 @@ Expected: FAIL，错误信息包含 `missing 随机应变 from official core`。
 
 不修改 `resource/yf/core_yf.js`。
 
-- [ ] **Step 4: 运行相关测试并确认通过**
+同时将 `README.md` 的仓库总卡牌数从 `161` 更新为 `162`，正式服可加载卡牌数从 `153` 更新为 `154`。
+
+- [x] **Step 4: 运行相关测试并确认通过**
 
 Run: `node --test tests/core-card-data.test.js`
 
 Expected: PASS，核心卡数据测试全部通过。
 
-- [ ] **Step 5: 运行完整验证**
+- [x] **Step 5: 运行完整验证**
 
 Run: `node --check app.js`
 
@@ -88,10 +91,10 @@ Run: `git diff --check`
 
 Expected: 无空白错误。
 
-- [ ] **Step 6: 提交实现**
+- [x] **Step 6: 提交实现**
 
 ```bash
-git add tests/core-card-data.test.js resource/data/core.js
+git add tests/core-card-data.test.js resource/data/core.js README.md
 git commit -m "data: add Adapt on the Fly core card"
 ```
 

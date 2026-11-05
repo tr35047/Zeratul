@@ -91,5 +91,6 @@ window._packData["core"] = {"name":"核心","cards":[
 {"id":"凯瑞甘","race":"Neutral","level":6,"number":1,"value":50},
 {"id":"死亡舰队","race":"Neutral","level":6,"number":2,"value":1000},
 {"id":"虚空构造体","race":"Neutral","level":6,"number":1,"value":3000},
-{"id":"死亡之握","race":"Neutral","level":6,"number":1,"value":1000}
+{"id":"死亡之握","race":"Neutral","level":6,"number":1,"value":1000},
+{"id":"随机应变","race":"Neutral","level":6,"number":5,"value":3000}
 ]};

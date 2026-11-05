@@ -70,3 +70,21 @@ test('Mohandar uses the official-only updated stats', () => {
 	assert.equal(yf.number, 5);
 	assert.equal(yf.value, 1800);
 });
+
+test('Adapt on the Fly is an official-only core card', () => {
+	const official = loadCards(['resource', 'data', 'core.js'], 'core');
+	const yf = loadCards(['resource', 'yf', 'core_yf.js'], 'core');
+	const card = official.find((candidate) => candidate.id === '随机应变');
+
+	assert.ok(card, 'missing 随机应变 from official core');
+	assert.deepEqual(
+		{
+			race: card.race,
+			level: card.level,
+			number: card.number,
+			value: card.value
+		},
+		{race: 'Neutral', level: 6, number: 5, value: 3000}
+	);
+	assert.equal(yf.some((candidate) => candidate.id === '随机应变'), false);
+});
